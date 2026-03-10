@@ -1,5 +1,4 @@
 import { encodeFunctionData, isAddress, type Abi, type Address } from "viem";
-import { createPrivyActionAdapter } from "../agw/actions.js";
 import { buildExplorerUrl } from "../utils/explorer.js";
 import { assertToolCapability } from "./capability-guard.js";
 import { resolveToolNetworkConfig } from "./network.js";
@@ -91,12 +90,8 @@ export const writeContractTool: ToolHandler = {
       throw new Error("session is missing");
     }
 
-    const privyClient = context.sessionManager.getPrivyWalletClient();
-    const agwActions = createPrivyActionAdapter(privyClient, session.chainId);
-
-    const txHash = await agwActions.writeContract({
-      account: session.accountAddress as Address,
-      chain: undefined,
+    const abstractClient = await context.sessionManager.getAbstractClient();
+    const txHash = await abstractClient.writeContract({
       address,
       abi,
       functionName,

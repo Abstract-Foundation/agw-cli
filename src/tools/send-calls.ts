@@ -1,5 +1,4 @@
 import { isAddress, type Address, type Hex } from "viem";
-import { createPrivyActionAdapter } from "../agw/actions.js";
 import { assertToolCapability } from "./capability-guard.js";
 import type { ToolHandler } from "./types.js";
 
@@ -103,9 +102,8 @@ export const sendCallsTool: ToolHandler = {
       };
     }
 
-    const privyClient = context.sessionManager.getPrivyWalletClient();
-    const agwActions = createPrivyActionAdapter(privyClient, session.chainId);
-    const result = await agwActions.sendCalls({
+    const abstractClient = await context.sessionManager.getAbstractClient();
+    const txHash = await abstractClient.sendTransactionBatch({
       calls: calls.map(call => ({
         to: call.to,
         data: call.data,
@@ -117,8 +115,8 @@ export const sendCallsTool: ToolHandler = {
       execute: true,
       accountAddress: session.accountAddress,
       chainId: session.chainId,
-      id: result.id,
-      capabilities: result.capabilities ?? {},
+      id: txHash,
+      capabilities: {},
       callCount: calls.length,
       calls: calls.map(call => ({
         to: call.to,

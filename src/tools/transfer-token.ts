@@ -1,5 +1,4 @@
 import { erc20Abi, isAddress, zeroAddress, type Address } from "viem";
-import { createPrivyActionAdapter } from "../agw/actions.js";
 import { buildExplorerUrl } from "../utils/explorer.js";
 import { assertToolCapability } from "./capability-guard.js";
 import { resolveToolNetworkConfig } from "./network.js";
@@ -88,26 +87,16 @@ export const transferTokenTool: ToolHandler = {
       };
     }
 
-    const privyClient = context.sessionManager.getPrivyWalletClient();
-    const agwActions = createPrivyActionAdapter(privyClient, session.chainId);
+    const abstractClient = await context.sessionManager.getAbstractClient();
 
     const txHash = isNativeTransfer
-      ? await agwActions.sendTransaction({
-          account: session.accountAddress as Address,
-          chain: undefined,
-          to,
-          data: "0x",
-          value: amount,
-        })
-      : await agwActions.writeContract({
-          account: session.accountAddress as Address,
-          chain: undefined,
+      ? await abstractClient.sendTransaction({ to, data: "0x", value: amount })
+      : await abstractClient.writeContract({
           address: tokenAddress,
           abi: erc20Abi,
           functionName: "transfer",
           args: [to, amount],
-          value: 0n,
-        });
+        } as never);
 
     const networkConfig = resolveToolNetworkConfig(context, session.chainId);
     const explorerBase = networkConfig.chain.blockExplorers?.default?.url ?? null;

@@ -1,5 +1,4 @@
-import { type Abi, type Address } from "viem";
-import { createPrivyActionAdapter } from "../agw/actions.js";
+import { type Abi } from "viem";
 import { buildExplorerUrl } from "../utils/explorer.js";
 import { assertToolCapability } from "./capability-guard.js";
 import { resolveToolNetworkConfig } from "./network.js";
@@ -72,14 +71,12 @@ export const deployContractTool: ToolHandler = {
       };
     }
 
-    const privyClient = context.sessionManager.getPrivyWalletClient();
-    const agwActions = createPrivyActionAdapter(privyClient, session.chainId);
-
-    const txHash = await agwActions.deployContract({
-      account: session.accountAddress as Address,
-      chain: undefined,
+    const abstractClient = await context.sessionManager.getAbstractClient();
+    const txHash = await abstractClient.deployContract({
       abi,
       bytecode,
+      account: abstractClient.account,
+      chain: abstractClient.chain,
     });
 
     const networkConfig = resolveToolNetworkConfig(context, session.chainId);

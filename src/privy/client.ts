@@ -4,7 +4,6 @@ import type {
   PrivySignerConfig,
   PrivyTransactionRequest,
   PrivyWalletRpcErrorResponse,
-  PrivyWalletRpcResponse,
 } from "./types.js";
 
 const PRIVY_API_BASE = "https://api.privy.io";
@@ -110,18 +109,18 @@ export class PrivyWalletClient {
     params: Record<string, unknown>,
   ): Promise<string> {
     const url = `${PRIVY_API_BASE}/v1/wallets/${this.walletId}/rpc`;
-    const body = {
-      method,
-      caip2,
-      chain_type: "ethereum" as const,
-      params,
-    };
+    const includeChainFields = method !== "eth_signTypedData_v4";
+    const privyBody: Record<string, unknown> = { method, params };
+    if (includeChainFields) {
+      privyBody.caip2 = caip2;
+      privyBody.chain_type = "ethereum";
+    }
     const runtimeConfig = await this.resolveRuntimeConfig();
 
     const signature = computeAuthorizationSignature(this.getAuthKey(), {
       url,
       method: "POST",
-      body,
+      body: privyBody,
       appId: runtimeConfig.appId,
     });
 
@@ -134,7 +133,7 @@ export class PrivyWalletClient {
             "privy-app-id": runtimeConfig.appId,
             "privy-authorization-signature": signature,
           },
-          body: JSON.stringify(body),
+          body: JSON.stringify(privyBody),
         })
       : await fetch(new URL("/api/session/rpc", this.appUrl), {
           method: "POST",
@@ -168,8 +167,21 @@ export class PrivyWalletClient {
       throw new Error(`Privy wallet RPC failed (${response.status}): ${errorDetail}`);
     }
 
-    const result = (await response.json()) as PrivyWalletRpcResponse;
-    return result.data.result;
+    const result = (await response.json()) as Record<string, unknown>;
+    const data = result.data as Record<string, unknown> | undefined;
+    if (!data) {
+      throw new Error(`Privy RPC ${method}: unexpected response shape: ${JSON.stringify(result)}`);
+    }
+    const value =
+      (data.signature as string | undefined) ??
+      (data.signed_transaction as string | undefined) ??
+      (data.result as string | undefined);
+    if (typeof value !== "string") {
+      throw new Error(
+        `Privy RPC ${method}: no signature/result in response: ${JSON.stringify(data)}`,
+      );
+    }
+    return value;
   }
 
   async sendTransaction(chainId: number, transaction: PrivyTransactionRequest): Promise<string> {
@@ -183,9 +195,14 @@ export class PrivyWalletClient {
     });
   }
 
-  async signTypedData(chainId: number, typedData: string): Promise<string> {
+  async signTypedData(chainId: number, typedData: string | Record<string, unknown>): Promise<string> {
+    const parsed = typeof typedData === "string" ? JSON.parse(typedData) : typedData;
+    if (parsed.primaryType && !parsed.primary_type) {
+      parsed.primary_type = parsed.primaryType;
+      delete parsed.primaryType;
+    }
     return this.rpc("eth_signTypedData_v4", `eip155:${chainId}`, {
-      typed_data: typedData,
+      typed_data: parsed,
     });
   }
 

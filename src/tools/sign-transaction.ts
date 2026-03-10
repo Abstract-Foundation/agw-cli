@@ -1,5 +1,4 @@
 import { isAddress, type Address, type Hex } from "viem";
-import { createPrivyActionAdapter } from "../agw/actions.js";
 import { assertToolCapability } from "./capability-guard.js";
 import type { ToolHandler } from "./types.js";
 
@@ -63,16 +62,8 @@ export const signTransactionTool: ToolHandler = {
       throw new Error("session is missing");
     }
 
-    const privyClient = context.sessionManager.getPrivyWalletClient();
-    const agwActions = createPrivyActionAdapter(privyClient, session.chainId);
-
-    const signedPayload = await agwActions.signTransaction({
-      account: session.accountAddress as Address,
-      chain: undefined,
-      to,
-      data,
-      value,
-    });
+    const abstractClient = await context.sessionManager.getAbstractClient();
+    const signedPayload = await abstractClient.signTransaction({ to, data, value });
 
     return {
       signedPayload,

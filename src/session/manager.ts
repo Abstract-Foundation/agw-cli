@@ -1,3 +1,5 @@
+import type { Address } from "viem";
+import { type AbstractClient, createAgwAbstractClient } from "../agw/client.js";
 import { PrivyWalletClient } from "../privy/client.js";
 import { DEFAULT_CHAIN_ID, resolveNetworkConfig, type ResolvedNetworkConfig } from "../config/network.js";
 import { resolveAppUrl } from "../auth/bootstrap-internals.js";
@@ -22,6 +24,7 @@ export class SessionManager {
   private readonly appUrl: string;
   private session: AgwSessionData | null = null;
   private privyClient: PrivyWalletClient | null = null;
+  private abstractClient: AbstractClient | null = null;
 
   constructor(logger: Logger, options: SessionManagerOptions = {}) {
     this.logger = logger.child("session");
@@ -68,11 +71,13 @@ export class SessionManager {
     this.session = session;
     this.storage.save(session);
     this.privyClient = null;
+    this.abstractClient = null;
   }
 
   clearSession(): void {
     this.session = null;
     this.privyClient = null;
+    this.abstractClient = null;
     this.storage.delete();
   }
 
@@ -89,6 +94,7 @@ export class SessionManager {
     this.storage.save(this.session);
     this.storage.deleteAuthKeyfile();
     this.privyClient = null;
+    this.abstractClient = null;
   }
 
   getChainId(): number {
@@ -124,6 +130,42 @@ export class SessionManager {
     }
 
     return this.privyClient;
+  }
+
+  async getAbstractClient(): Promise<AbstractClient> {
+    if (this.abstractClient) return this.abstractClient;
+
+    const session = this.session;
+    if (!session) {
+      throw new Error("session is missing");
+    }
+    if (!isWriteReadySession(session)) {
+      throw new Error(
+        "write signer is not configured for this session. Re-run `agw-mcp init` and complete delegated access approval.",
+      );
+    }
+    if (!session.underlyingSignerAddress) {
+      throw new Error(
+        "session is missing underlyingSignerAddress. Re-run `agw-mcp init` to create a session with signer binding.",
+      );
+    }
+
+    const privyClient = this.getPrivyWalletClient();
+    const networkConfig = resolveNetworkConfig({
+      chainId: session.chainId,
+      rpcUrl: this.rpcUrl,
+    });
+
+    this.abstractClient = await createAgwAbstractClient({
+      privyClient,
+      signerAddress: session.underlyingSignerAddress as Address,
+      accountAddress: session.accountAddress as Address,
+      chain: networkConfig.chain,
+      chainId: session.chainId,
+      rpcUrl: networkConfig.rpcUrl!,
+    });
+
+    return this.abstractClient;
   }
 
   getStorageDir(): string {

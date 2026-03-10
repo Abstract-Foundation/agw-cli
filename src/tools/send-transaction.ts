@@ -1,5 +1,4 @@
 import { isAddress, type Address, type Hex } from "viem";
-import { createPrivyActionAdapter } from "../agw/actions.js";
 import { buildExplorerUrl } from "../utils/explorer.js";
 import { assertToolCapability } from "./capability-guard.js";
 import { resolveToolNetworkConfig } from "./network.js";
@@ -96,16 +95,8 @@ export const sendTransactionTool: ToolHandler = {
       };
     }
 
-    const privyClient = context.sessionManager.getPrivyWalletClient();
-    const agwActions = createPrivyActionAdapter(privyClient, session.chainId);
-
-    const txHash = await agwActions.sendTransaction({
-      account: session.accountAddress as Address,
-      chain: undefined,
-      to,
-      data,
-      value,
-    });
+    const abstractClient = await context.sessionManager.getAbstractClient();
+    const txHash = await abstractClient.sendTransaction({ to, data, value });
 
     const networkConfig = resolveToolNetworkConfig(context, session.chainId);
     const explorerBase = networkConfig.chain.blockExplorers?.default?.url ?? null;

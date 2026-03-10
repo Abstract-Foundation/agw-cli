@@ -43,12 +43,11 @@ export async function POST(request: Request) {
         'privy-app-id': appId,
         'privy-authorization-signature': body.authorizationSignature,
       },
-      body: JSON.stringify({
-        method: body.method,
-        caip2: body.caip2,
-        chain_type: 'ethereum',
-        params: body.params,
-      }),
+      body: JSON.stringify(
+        body.method === 'eth_signTypedData_v4'
+          ? { method: body.method, params: body.params }
+          : { method: body.method, caip2: body.caip2, chain_type: 'ethereum', params: body.params },
+      ),
     });
 
     const responseBody = await response.json();

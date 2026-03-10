@@ -11,6 +11,7 @@ export interface PrivySignerConfig {
 export interface PrivyWalletRpcRequest {
   method: string;
   caip2: string;
+  chain_type: "ethereum";
   params: {
     transaction?: PrivyTransactionRequest;
     message?: string;
@@ -23,12 +24,14 @@ export interface PrivyTransactionRequest {
   data?: string;
   value?: string;
   from?: string;
-  chainId?: string;
+  chain_id?: string;
 }
 
 export interface PrivyWalletRpcResponse {
   data: {
-    result: string;
+    signature?: string;
+    signed_transaction?: string;
+    result?: string;
   };
 }
 

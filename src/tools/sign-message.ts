@@ -1,4 +1,3 @@
-import { createPrivyActionAdapter } from "../agw/actions.js";
 import { assertToolCapability } from "./capability-guard.js";
 import type { ToolHandler } from "./types.js";
 
@@ -32,9 +31,8 @@ export const signMessageTool: ToolHandler = {
       throw new Error("session is missing");
     }
 
-    const privyClient = context.sessionManager.getPrivyWalletClient();
-    const agwActions = createPrivyActionAdapter(privyClient, session.chainId);
-    const signature = await agwActions.signMessage({ message: params.message });
+    const abstractClient = await context.sessionManager.getAbstractClient();
+    const signature = await abstractClient.signMessage({ message: params.message });
 
     return {
       signature,
