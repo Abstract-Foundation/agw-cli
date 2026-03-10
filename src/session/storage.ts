@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { isSessionPolicyMeta } from "../policy/meta.js";
+import { authKeyfileExists, deleteAuthKeyfile } from "../privy/auth.js";
 import type { AgwSessionData } from "./types.js";
 
 export class SessionStorage {
@@ -29,6 +31,23 @@ export class SessionStorage {
     }
   }
 
+  private resolveAuthKeyRefForRuntime(data: AgwSessionData): AgwSessionData | null {
+    if (!data.privyAuthKeyRef) {
+      return data;
+    }
+
+    const keyfilePath = data.privyAuthKeyRef.value;
+
+    if (!fs.existsSync(keyfilePath)) {
+      if (data.status === "revoked") {
+        return data;
+      }
+      return null;
+    }
+
+    return data;
+  }
+
   load(): AgwSessionData | null {
     try {
       if (!fs.existsSync(this.filePath)) {
@@ -41,11 +60,15 @@ export class SessionStorage {
         typeof parsed.chainId !== "number" ||
         typeof parsed.createdAt !== "number" ||
         typeof parsed.updatedAt !== "number" ||
-        (parsed.status !== "active" && parsed.status !== "revoked")
+        typeof parsed.status !== "string" ||
+        (parsed.privyWalletId !== undefined && typeof parsed.privyWalletId !== "string") ||
+        (parsed.privyAuthKeyRef !== undefined && parsed.privyAuthKeyRef?.kind !== "keyfile") ||
+        (parsed.privyAuthKeyRef !== undefined && typeof parsed.privyAuthKeyRef?.value !== "string") ||
+        (parsed.policyMeta !== undefined && !isSessionPolicyMeta(parsed.policyMeta))
       ) {
         return null;
       }
-      return parsed as AgwSessionData;
+      return this.resolveAuthKeyRefForRuntime(parsed as AgwSessionData);
     } catch {
       return null;
     }
@@ -56,6 +79,13 @@ export class SessionStorage {
     fs.writeFileSync(this.filePath, JSON.stringify(data, null, 2), { mode: 0o600 });
   }
 
+  deleteAuthKeyfile(): void {
+    if (!authKeyfileExists(this.dir)) {
+      return;
+    }
+    deleteAuthKeyfile(this.dir);
+  }
+
   delete(): void {
     try {
       if (fs.existsSync(this.filePath)) {
@@ -64,5 +94,6 @@ export class SessionStorage {
     } catch {
       // Ignore file deletion errors.
     }
+    this.deleteAuthKeyfile();
   }
 }

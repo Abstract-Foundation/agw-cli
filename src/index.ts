@@ -26,14 +26,14 @@ function resolveCliVersion(): string {
 }
 
 const program = new Command();
-program.name("agw-mcp").description("MCP server for Abstract wallet + chain data").version(resolveCliVersion());
+program.name("agw-mcp").description("Local MCP server for AGW session-key workflows").version(resolveCliVersion());
 
 program
   .command("init")
-  .description("Link a wallet for local AGW MCP context")
+  .description("Bootstrap local AGW MCP session storage")
   .option("--chain-id <chainId>", "EVM chain id (env: AGW_MCP_CHAIN_ID)")
   .option("--rpc-url <rpcUrl>", "RPC URL override (env: AGW_MCP_RPC_URL)")
-  .option("--app-url <url>", "Hosted onboarding URL (defaults to https://mcp.abs.xyz; env: AGW_MCP_APP_URL)")
+  .option("--app-url <url>", "Hosted session onboarding URL (defaults to https://mcp.abs.xyz; env: AGW_MCP_APP_URL)")
   .option("--storage-dir <dir>", "Session storage directory")
   .action(async options => {
     const networkConfig = resolveNetworkConfig({
@@ -54,7 +54,7 @@ program
       storageDir: options.storageDir,
     });
     manager.setSession(session);
-    logger.info("Wallet linked. You can now run `agw-mcp serve`.");
+    logger.info("Session saved. You can now run `agw-mcp serve`.");
   });
 
 program

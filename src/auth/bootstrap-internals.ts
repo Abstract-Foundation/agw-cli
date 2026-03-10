@@ -1,9 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { SessionBundlePayload } from "./callback.js";
+import type { PrivySignerBundlePayload } from "./callback.js";
 
 export interface StorageSnapshot {
+  keyPath: string;
   sessionPath: string;
+  keyBytes: Buffer | null;
   sessionBytes: Buffer | null;
 }
 
@@ -11,6 +13,7 @@ export interface BootstrapLockHandle {
   release: () => void;
 }
 
+const AUTH_KEY_FILENAME = "privy-auth.key";
 const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 const BOOTSTRAP_LOCK_STALE_MS = 30 * 60 * 1000;
 const DEFAULT_ONBOARDING_APP_URL = "https://mcp.abs.xyz";
@@ -145,15 +148,26 @@ export function acquireBootstrapLock(storageDir: string): BootstrapLockHandle {
 }
 
 export function captureStorageSnapshot(storageDir: string): StorageSnapshot {
+  const keyPath = path.join(storageDir, AUTH_KEY_FILENAME);
   const sessionPath = path.join(storageDir, "session.json");
 
   return {
+    keyPath,
     sessionPath,
+    keyBytes: fs.existsSync(keyPath) ? fs.readFileSync(keyPath) : null,
     sessionBytes: fs.existsSync(sessionPath) ? fs.readFileSync(sessionPath) : null,
   };
 }
 
 export function restoreStorageSnapshot(snapshot: StorageSnapshot): void {
+  if (snapshot.keyBytes === null) {
+    if (fs.existsSync(snapshot.keyPath)) {
+      fs.unlinkSync(snapshot.keyPath);
+    }
+  } else {
+    fs.writeFileSync(snapshot.keyPath, snapshot.keyBytes, { mode: 0o600 });
+  }
+
   if (snapshot.sessionBytes === null) {
     if (fs.existsSync(snapshot.sessionPath)) {
       fs.unlinkSync(snapshot.sessionPath);
@@ -197,13 +211,13 @@ export function validateAppUrl(appUrl: string): void {
 }
 
 export function assertBundleMatchesBootstrapRequest(input: {
-  bundle: SessionBundlePayload;
+  bundle: PrivySignerBundlePayload;
   requestedChainId: number;
 }): void {
   const { bundle, requestedChainId } = input;
 
   if (bundle.chainId !== requestedChainId) {
-    throw new Error(`Session bundle chain id (${bundle.chainId}) does not match requested chain id (${requestedChainId}).`);
+    throw new Error(`Signer bundle chain id (${bundle.chainId}) does not match requested chain id (${requestedChainId}).`);
   }
 }
 

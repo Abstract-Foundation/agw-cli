@@ -1,10 +1,13 @@
 import { isAddress } from "viem";
+import { parseSessionPolicyMeta } from "../policy/meta.js";
+import type { SessionPolicyMeta } from "../session/types.js";
 
 const CALLBACK_PAYLOAD_QUERY_KEY = "session";
 
-export interface SessionBundlePayload {
+export interface PrivySignerBundlePayload {
   accountAddress: string;
   chainId: number;
+  policyMeta?: SessionPolicyMeta;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -80,15 +83,18 @@ function parsePayloadObject(rawPayload: string): Record<string, unknown> {
   throw new Error("Invalid session bundle payload. Expected JSON or base64url-encoded JSON.");
 }
 
-export function parseSessionBundleInput(input: string): SessionBundlePayload {
+export function parseSignerBundleInput(input: string): PrivySignerBundlePayload {
   const payload = parsePayloadObject(resolvePayloadCandidate(input));
 
   if (typeof payload.accountAddress !== "string" || !isAddress(payload.accountAddress)) {
-    throw new Error("Invalid session bundle accountAddress.");
+    throw new Error("Invalid signer bundle accountAddress.");
   }
+
+  const chainId = parsePositiveInt(payload.chainId, "chainId");
 
   return {
     accountAddress: payload.accountAddress,
-    chainId: parsePositiveInt(payload.chainId, "chainId"),
+    chainId,
+    policyMeta: parseSessionPolicyMeta(payload.policyMeta),
   };
 }
