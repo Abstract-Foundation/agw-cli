@@ -28,6 +28,7 @@ export interface AgwSendTransactionParameters {
 export type AgwSendTransactionReturnType = `0x${string}`;
 
 export interface AgwSendCallsParameters {
+  account: Address;
   calls: readonly Record<string, unknown>[];
   [key: string]: unknown;
 }
@@ -83,6 +84,8 @@ export function createPrivyActionAdapter(client: PrivyWalletClient, chainId: num
 
     signTransaction: async (args) => {
       const result = await client.signTransaction(chainId, {
+        from: args.account,
+        chain_id: `0x${chainId.toString(16)}`,
         to: args.to,
         data: args.data,
         value: formatValue(args.value),
@@ -92,6 +95,8 @@ export function createPrivyActionAdapter(client: PrivyWalletClient, chainId: num
 
     sendTransaction: async (args) => {
       const result = await client.sendTransaction(chainId, {
+        from: args.account,
+        chain_id: `0x${chainId.toString(16)}`,
         to: args.to,
         data: args.data,
         value: formatValue(args.value),
@@ -106,6 +111,8 @@ export function createPrivyActionAdapter(client: PrivyWalletClient, chainId: num
         const data = (call.data as string) ?? "0x";
         const value = call.value !== undefined ? BigInt(call.value as string) : 0n;
         const txHash = await client.sendTransaction(chainId, {
+          from: args.account as string | undefined,
+          chain_id: `0x${chainId.toString(16)}`,
           to,
           data,
           value: formatValue(value),
@@ -125,6 +132,8 @@ export function createPrivyActionAdapter(client: PrivyWalletClient, chainId: num
         args: args.args as readonly unknown[],
       });
       const result = await client.sendTransaction(chainId, {
+        from: args.account,
+        chain_id: `0x${chainId.toString(16)}`,
         to: args.address,
         data,
         value: formatValue(args.value ?? 0n),
@@ -153,6 +162,8 @@ export function createPrivyActionAdapter(client: PrivyWalletClient, chainId: num
       }
 
       const result = await client.sendTransaction(chainId, {
+        from: args.account,
+        chain_id: `0x${chainId.toString(16)}`,
         data,
         value: "0x0",
       });

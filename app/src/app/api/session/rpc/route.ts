@@ -46,17 +46,14 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         method: body.method,
         caip2: body.caip2,
+        chain_type: 'ethereum',
         params: body.params,
       }),
     });
 
     const responseBody = await response.json();
     if (!response.ok) {
-      const errorMessage =
-        (responseBody as { error?: { message?: string } }).error?.message ||
-        (responseBody as { message?: string }).message ||
-        response.statusText;
-      return NextResponse.json({ error: errorMessage }, { status: response.status });
+      return NextResponse.json(responseBody, { status: response.status });
     }
 
     return NextResponse.json(responseBody);

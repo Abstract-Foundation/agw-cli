@@ -110,7 +110,12 @@ export class PrivyWalletClient {
     params: Record<string, unknown>,
   ): Promise<string> {
     const url = `${PRIVY_API_BASE}/v1/wallets/${this.walletId}/rpc`;
-    const body = { method, caip2, params };
+    const body = {
+      method,
+      caip2,
+      chain_type: "ethereum" as const,
+      params,
+    };
     const runtimeConfig = await this.resolveRuntimeConfig();
 
     const signature = computeAuthorizationSignature(this.getAuthKey(), {
@@ -148,8 +153,15 @@ export class PrivyWalletClient {
     if (!response.ok) {
       let errorDetail: string;
       try {
-        const errorBody = (await response.json()) as PrivyWalletRpcErrorResponse;
-        errorDetail = errorBody.error?.message ?? response.statusText;
+        const errorBody = (await response.json()) as Record<string, unknown>;
+        const nested = errorBody.error;
+        if (typeof nested === "string") {
+          errorDetail = nested;
+        } else if (nested && typeof nested === "object" && "message" in nested) {
+          errorDetail = (nested as PrivyWalletRpcErrorResponse["error"]).message;
+        } else {
+          errorDetail = JSON.stringify(errorBody);
+        }
       } catch {
         errorDetail = response.statusText;
       }
