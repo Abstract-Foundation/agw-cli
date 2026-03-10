@@ -284,6 +284,37 @@ export function toPolicyPreview(
   };
 }
 
+export function buildDefaultPolicyPreview(nowUnixSeconds = Math.floor(Date.now() / 1000)): PolicyPreview {
+  const preset = BUILT_IN_POLICY_PRESETS.full_app_control;
+
+  return {
+    presetId: preset.id,
+    label: preset.label,
+    description: preset.description,
+    policyPayload: {
+      expiresAt: nowUnixSeconds + preset.defaultLimits.expiresInSeconds,
+      sessionConfig: {
+        feeLimit: preset.defaultLimits.feeLimit,
+        maxValuePerUse: preset.defaultLimits.maxValuePerUse,
+        callPolicies: [],
+        transferPolicies: [],
+      },
+      policyMeta: {
+        version: 1,
+        mode: 'guided',
+        presetId: preset.id,
+        presetLabel: preset.label,
+        enabledTools: [...ALL_SESSION_TOOLS],
+        selectedAppIds: [],
+        selectedContractAddresses: [],
+        unverifiedAppIds: [],
+        warnings: [],
+        generatedAt: nowUnixSeconds,
+      },
+    },
+  };
+}
+
 export function listRegistryAppsForUi() {
   return APP_REGISTRY;
 }

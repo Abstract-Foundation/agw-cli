@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import type { Chain } from 'viem/chains';
+import { useHeadlessDelegatedActions } from '@privy-io/react-auth';
 import Button from '@/@abstract-ui/components/Button';
 import {
   Card,
@@ -11,7 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/Card';
-import { useCreateSession } from '@/hooks/useCreateSession';
+import { useCreateAgentSigner } from '@/hooks/useCreateSession';
 import { useSessionWizardState } from '@/hooks/useSessionWizardState';
 import { buildRedirectUrl } from '@/lib/redirect';
 import styles from '../styles.module.scss';
@@ -26,10 +27,12 @@ export default function Creating({
   const hasStartedRef = useRef(false);
   const {
     agwAddress,
+    policyPreview,
     markCreationError,
     markCreationSuccess,
   } = useSessionWizardState();
-  const { createSession, isPending } = useCreateSession();
+  const { createAgentSigner, isPending } = useCreateAgentSigner();
+  const { delegateWallet } = useHeadlessDelegatedActions();
 
   useEffect(() => {
     if (hasStartedRef.current) {
@@ -43,17 +46,20 @@ export default function Creating({
         if (!agwAddress) {
           throw new Error('Wallet is not connected.');
         }
+        if (!policyPreview) {
+          throw new Error('Policy preview is missing.');
+        }
         const accountAddress = agwAddress as `0x${string}`;
 
-        const bundle = await createSession({
+        const bundle = await createAgentSigner({
           accountAddress,
           chainId: chain.id,
+          policyPayload: policyPreview.policyPayload,
+          delegateWallet,
         });
 
         const redirectUrl = buildRedirectUrl(callbackUrl, bundle);
-        markCreationSuccess({
-          redirectUrl,
-        });
+        markCreationSuccess({ redirectUrl });
       } catch (error) {
         markCreationError(error instanceof Error ? error.message : String(error));
       }
@@ -62,7 +68,9 @@ export default function Creating({
     void run();
   }, [
     agwAddress,
-    createSession,
+    policyPreview,
+    createAgentSigner,
+    delegateWallet,
     callbackUrl,
     chain.id,
     markCreationError,
@@ -73,14 +81,14 @@ export default function Creating({
     <div className={styles.wrapper}>
       <Card>
         <CardHeader>
-          <CardTitle>Linking Wallet</CardTitle>
-          <CardDescription>Preparing wallet context for your local MCP server.</CardDescription>
+          <CardTitle>Setting Up Agent Access</CardTitle>
+          <CardDescription>Requesting delegated wallet access for this device.</CardDescription>
         </CardHeader>
         <CardContent>
           <p className={styles.helper}>
             {isPending
-              ? 'Finalizing wallet link...'
-              : 'Building local callback payload...'}
+              ? 'Waiting for Privy delegation approval...'
+              : 'Preparing delegated access request...'}
           </p>
         </CardContent>
         <CardFooter className={styles.footer}>

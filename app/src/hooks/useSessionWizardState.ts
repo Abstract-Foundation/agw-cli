@@ -1,48 +1,53 @@
 'use client';
 
-import { useCallback, useEffect } from 'react';
-import { useAccount, useConnect } from 'wagmi';
+import { useEffect } from 'react';
+import { usePrivy } from '@privy-io/react-auth';
 import useSessionWizardStore from '@/stores/useSessionWizardStore';
 
 export function useSessionWizardState() {
-  const { isConnected, address } = useAccount();
-  const { connect, connectors, isPending: isLoginPending } = useConnect();
+  const { ready, authenticated, user } = usePrivy();
 
-  const login = useCallback(() => {
-    const connector = connectors.find(c => c.id === 'xyz.abs.privy');
-    if (!connector) {
-      throw new Error('Abstract connector not found');
-    }
-    connect({ connector });
-  }, [connect, connectors]);
+  const privyWallet = user?.linkedAccounts
+    .filter(account => account.type === 'wallet')
+    .find(account => account.walletClientType === 'privy');
+  const address = (privyWallet?.address ?? null) as `0x${string}` | null;
+  const isConnected = Boolean(ready && authenticated && address);
 
   const currentStep = useSessionWizardStore(state => state.currentStep);
   const agwAddress = useSessionWizardStore(state => state.agwAddress);
+  const dangerAcknowledged = useSessionWizardStore(state => state.dangerAcknowledged);
+  const policyPreview = useSessionWizardStore(state => state.policyPreview);
   const error = useSessionWizardStore(state => state.error);
   const redirectUrl = useSessionWizardStore(state => state.redirectUrl);
 
   const syncConnection = useSessionWizardStore(state => state.syncConnection);
+  const setDangerAcknowledged = useSessionWizardStore(state => state.setDangerAcknowledged);
+  const setValidationError = useSessionWizardStore(state => state.setValidationError);
+  const proceedToCreating = useSessionWizardStore(state => state.proceedToCreating);
+  const backToPolicySelection = useSessionWizardStore(state => state.backToPolicySelection);
   const markCreationSuccess = useSessionWizardStore(state => state.markCreationSuccess);
   const markCreationError = useSessionWizardStore(state => state.markCreationError);
-  const backToStart = useSessionWizardStore(state => state.backToStart);
 
   useEffect(() => {
     syncConnection({
       isConnected,
-      address: address ?? null,
+      address,
     });
   }, [isConnected, address, syncConnection]);
 
   return {
     currentStep,
     agwAddress,
+    dangerAcknowledged,
+    policyPreview,
     error,
     redirectUrl,
+    setDangerAcknowledged,
+    setValidationError,
+    proceedToCreating,
+    backToPolicySelection,
     markCreationSuccess,
     markCreationError,
-    backToStart,
     isConnected,
-    isLoginPending,
-    login,
   };
 }

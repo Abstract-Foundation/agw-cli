@@ -2,27 +2,43 @@
 
 import { useCallback, useState } from 'react';
 import type { Address } from 'viem';
-import type { SessionBundle } from '@/lib/session-config';
+import type { PolicyPreview } from '@/lib/policy-types';
+import type { PrivySignerBundle } from '@/lib/session-config';
 
-export function useCreateSession() {
+export interface CreateAgentSignerInput {
+  accountAddress: Address;
+  chainId: number;
+  policyPayload: PolicyPreview['policyPayload'];
+  delegateWallet: (params: {
+    address: string;
+    chainType: 'ethereum';
+  }) => Promise<unknown>;
+}
+
+export function useCreateAgentSigner() {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const createSession = useCallback(
+  const createAgentSigner = useCallback(
     async ({
       accountAddress,
       chainId,
-    }: {
-      accountAddress: Address;
-      chainId: number;
-    }): Promise<SessionBundle> => {
+      policyPayload,
+      delegateWallet,
+    }: CreateAgentSignerInput): Promise<PrivySignerBundle> => {
       setIsPending(true);
       setError(null);
 
       try {
+        await delegateWallet({
+          address: accountAddress,
+          chainType: 'ethereum',
+        });
+
         return {
           accountAddress,
           chainId,
+          policyMeta: policyPayload.policyMeta,
         };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
@@ -36,7 +52,7 @@ export function useCreateSession() {
   );
 
   return {
-    createSession,
+    createAgentSigner,
     isPending,
     error,
   };

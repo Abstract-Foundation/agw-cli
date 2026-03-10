@@ -19,13 +19,13 @@ export default function Success() {
     <div className={styles.wrapper}>
       <Card>
         <CardHeader>
-          <CardTitle>Wallet Linked</CardTitle>
+          <CardTitle>Agent Access Delegated</CardTitle>
           <CardDescription>Return to your CLI callback to finish setup.</CardDescription>
         </CardHeader>
         <CardContent className={styles.content}>
           {redirectUrl ? (
             <p className={styles.helper}>
-              Open the link below to hand off your linked wallet context to the CLI.
+              Open the link below to hand off your new agent signer to the CLI.
             </p>
           ) : null}
           {redirectUrl ? (
@@ -34,7 +34,7 @@ export default function Success() {
             </p>
           ) : null}
           <p className={styles.helper}>
-            After returning to CLI, start the server with <code>agw-mcp serve</code>.
+            After returning to CLI, run <code>get_session_status</code> to confirm and <code>revoke_session</code> when done.
           </p>
         </CardContent>
         <CardFooter className={styles.footer}>

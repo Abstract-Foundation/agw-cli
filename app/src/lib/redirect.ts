@@ -1,4 +1,4 @@
-import type { SessionBundle } from './session-config';
+import type { PrivySignerBundle } from './session-config';
 
 const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 
@@ -38,7 +38,7 @@ export function isLoopbackCallbackUrl(callbackUrl: string): boolean {
   }
 }
 
-export function buildRedirectUrl(callbackUrl: string, bundle: SessionBundle): string {
+export function buildRedirectUrl(callbackUrl: string, bundle: PrivySignerBundle): string {
   if (!isLoopbackCallbackUrl(callbackUrl)) {
     throw new Error('Invalid callback_url. Only loopback http URLs are allowed.');
   }
