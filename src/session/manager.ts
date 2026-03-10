@@ -1,5 +1,6 @@
-import { PrivyWalletClient, resolvePrivyAppCredentials } from "../privy/client.js";
+import { PrivyWalletClient } from "../privy/client.js";
 import { DEFAULT_CHAIN_ID, resolveNetworkConfig, type ResolvedNetworkConfig } from "../config/network.js";
+import { resolveAppUrl } from "../auth/bootstrap-internals.js";
 import type { Logger } from "../utils/logger.js";
 import { SessionStorage } from "./storage.js";
 import { isWriteReadySession, resolveSessionReadiness, type AgwSessionData, type SessionReadiness, type SessionStatus } from "./types.js";
@@ -10,6 +11,7 @@ export interface SessionManagerOptions {
   storageDir?: string;
   chainId?: number;
   rpcUrl?: string;
+  appUrl?: string;
 }
 
 export class SessionManager {
@@ -17,6 +19,7 @@ export class SessionManager {
   private readonly logger: Logger;
   private readonly chainId: number;
   private readonly rpcUrl?: string;
+  private readonly appUrl: string;
   private session: AgwSessionData | null = null;
   private privyClient: PrivyWalletClient | null = null;
 
@@ -25,6 +28,7 @@ export class SessionManager {
     this.storage = new SessionStorage(options.storageDir);
     this.chainId = options.chainId ?? DEFAULT_CHAIN_ID;
     this.rpcUrl = options.rpcUrl;
+    this.appUrl = resolveAppUrl({ appUrl: options.appUrl });
   }
 
   initialize(): void {
@@ -110,10 +114,8 @@ export class SessionManager {
     }
 
     if (!this.privyClient) {
-      const { appId, appSecret } = resolvePrivyAppCredentials();
       this.privyClient = new PrivyWalletClient({
-        appId,
-        appSecret,
+        appUrl: this.appUrl,
         signerConfig: {
           walletId: session.privyWalletId!,
           authKeyRef: session.privyAuthKeyRef!,

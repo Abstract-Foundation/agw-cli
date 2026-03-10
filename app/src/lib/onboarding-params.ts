@@ -13,6 +13,7 @@ export interface RevokeParams {
   action: 'revoke';
   callbackUrl: string;
   chainId: SupportedChainId;
+  accountAddress: string;
   walletId: string;
   signerId: string;
   signerLabel?: string;
@@ -130,10 +131,11 @@ export function parseRevokeParams(searchParams: URLSearchParams): RevokeValidati
 
   const walletId = searchParams.get('wallet_id');
   const signerId = searchParams.get('signer_id');
-  if (!walletId || !signerId) {
+  const accountAddress = searchParams.get('account_address');
+  if (!walletId || !signerId || !accountAddress) {
     return {
       ok: false,
-      error: 'Missing required parameters: wallet_id, signer_id.',
+      error: 'Missing required parameters: account_address, wallet_id, signer_id.',
     };
   }
 
@@ -146,6 +148,7 @@ export function parseRevokeParams(searchParams: URLSearchParams): RevokeValidati
       action: 'revoke',
       callbackUrl: shared.callbackUrl,
       chainId: shared.chainId,
+      accountAddress,
       walletId,
       signerId,
       signerLabel,

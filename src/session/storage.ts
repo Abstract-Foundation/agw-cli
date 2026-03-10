@@ -129,6 +129,7 @@ export class SessionStorage {
       const parsed = this.normalizeSignerBinding(JSON.parse(raw) as Partial<AgwSessionData>);
       if (
         typeof parsed.accountAddress !== "string" ||
+        (parsed.underlyingSignerAddress !== undefined && typeof parsed.underlyingSignerAddress !== "string") ||
         typeof parsed.chainId !== "number" ||
         typeof parsed.createdAt !== "number" ||
         typeof parsed.updatedAt !== "number" ||

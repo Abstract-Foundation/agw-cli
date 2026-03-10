@@ -8,25 +8,30 @@ import type {
 } from "./types.js";
 
 const PRIVY_API_BASE = "https://api.privy.io";
+const LOCALHOST_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
 export interface PrivyWalletClientConfig {
-  appId: string;
-  appSecret: string;
   signerConfig: PrivySignerConfig;
+  appUrl: string;
+  appId?: string;
+  appSecret?: string;
 }
 
 export class PrivyWalletClient {
-  private readonly appId: string;
-  private readonly appSecret: string;
+  private readonly appId?: string;
+  private readonly appSecret?: string;
   private readonly walletId: string;
+  private readonly appUrl: string;
   private authKey: KeyObject | null = null;
   private readonly authKeyRef: string;
+  private runtimeConfigPromise: Promise<{ appId: string; mode: "proxy" | "direct" }> | null = null;
 
   constructor(config: PrivyWalletClientConfig) {
     this.appId = config.appId;
     this.appSecret = config.appSecret;
     this.walletId = config.signerConfig.walletId;
     this.authKeyRef = config.signerConfig.authKeyRef.value;
+    this.appUrl = config.appUrl;
   }
 
   private getAuthKey(): KeyObject {
@@ -36,8 +41,67 @@ export class PrivyWalletClient {
     return this.authKey;
   }
 
-  private buildBasicAuth(): string {
-    return Buffer.from(`${this.appId}:${this.appSecret}`).toString("base64");
+  private buildBasicAuth(appId: string, appSecret: string): string {
+    return Buffer.from(`${appId}:${appSecret}`).toString("base64");
+  }
+
+  private isLoopbackAppUrl(): boolean {
+    try {
+      const parsed = new URL(this.appUrl);
+      return LOCALHOST_HOSTS.has(parsed.hostname);
+    } catch {
+      return false;
+    }
+  }
+
+  private async resolveRuntimeConfig(): Promise<{ appId: string; mode: "proxy" | "direct" }> {
+    if (this.runtimeConfigPromise) {
+      return this.runtimeConfigPromise;
+    }
+
+    this.runtimeConfigPromise = (async () => {
+      if (this.appId && this.appSecret) {
+        return {
+          appId: this.appId,
+          mode: "direct" as const,
+        };
+      }
+
+      const explicitAppId = process.env.AGW_MCP_PRIVY_APP_ID?.trim();
+      if (explicitAppId) {
+        return {
+          appId: explicitAppId,
+          mode: "proxy" as const,
+        };
+      }
+
+      if (!this.isLoopbackAppUrl()) {
+        throw new Error(
+          "AGW_MCP_PRIVY_APP_ID is required for non-localhost hosted app URLs when the CLI is running without Privy server credentials.",
+        );
+      }
+
+      const response = await fetch(new URL("/api/session/callback-key", this.appUrl), {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch hosted runtime config (${response.status} ${response.statusText}).`);
+      }
+      const body = (await response.json()) as { privyAppId?: unknown };
+      if (typeof body.privyAppId !== "string" || !body.privyAppId.trim()) {
+        throw new Error("Hosted runtime config is missing `privyAppId`.");
+      }
+
+      return {
+        appId: body.privyAppId.trim(),
+        mode: "proxy" as const,
+      };
+    })();
+
+    return this.runtimeConfigPromise;
   }
 
   private async rpc(
@@ -47,24 +111,39 @@ export class PrivyWalletClient {
   ): Promise<string> {
     const url = `${PRIVY_API_BASE}/v1/wallets/${this.walletId}/rpc`;
     const body = { method, caip2, params };
+    const runtimeConfig = await this.resolveRuntimeConfig();
 
     const signature = computeAuthorizationSignature(this.getAuthKey(), {
       url,
       method: "POST",
       body,
-      appId: this.appId,
+      appId: runtimeConfig.appId,
     });
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Basic ${this.buildBasicAuth()}`,
-        "privy-app-id": this.appId,
-        "privy-authorization-signature": signature,
-      },
-      body: JSON.stringify(body),
-    });
+    const response = runtimeConfig.mode === "direct"
+      ? await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Basic ${this.buildBasicAuth(runtimeConfig.appId, this.appSecret!)}`,
+            "privy-app-id": runtimeConfig.appId,
+            "privy-authorization-signature": signature,
+          },
+          body: JSON.stringify(body),
+        })
+      : await fetch(new URL("/api/session/rpc", this.appUrl), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            walletId: this.walletId,
+            method,
+            caip2,
+            params,
+            authorizationSignature: signature,
+          }),
+        });
 
     if (!response.ok) {
       let errorDetail: string;

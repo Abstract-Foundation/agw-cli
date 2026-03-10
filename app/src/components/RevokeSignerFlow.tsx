@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuthorizationSignature, usePrivy } from '@privy-io/react-auth';
 import Button from '@/@abstract-ui/components/Button';
 import {
@@ -11,19 +11,20 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/Card';
-import { buildRedirectUrl } from '@/lib/redirect';
-import type { PrivySignerRevokeBundle } from '@/lib/session-config';
 import styles from '@/components/SessionWizard/styles.module.scss';
 
 interface RevokePrepareResponse {
   walletId: string;
   accountAddress: string;
   patchBody: Record<string, unknown>;
+  signerLabel?: string;
+  signerFingerprint?: string;
 }
 
 export default function RevokeSignerFlow({
   callbackUrl,
   chainId,
+  accountAddress,
   walletId,
   signerId,
   signerLabel,
@@ -31,6 +32,7 @@ export default function RevokeSignerFlow({
 }: {
   callbackUrl: string;
   chainId: number;
+  accountAddress: string;
   walletId: string;
   signerId: string;
   signerLabel?: string;
@@ -41,8 +43,40 @@ export default function RevokeSignerFlow({
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+  const [preparedSignerLabel, setPreparedSignerLabel] = useState<string | null>(signerLabel ?? null);
+  const [preparedSignerFingerprint, setPreparedSignerFingerprint] = useState<string | null>(signerFingerprint ?? null);
 
   const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadSignerSummary = async () => {
+      try {
+        const prepareResponse = await fetch(
+          `/api/session/revoke?wallet_id=${encodeURIComponent(walletId)}&signer_id=${encodeURIComponent(signerId)}`,
+        );
+        const prepared = (await prepareResponse.json()) as RevokePrepareResponse & { error?: string };
+        if (!prepareResponse.ok) {
+          throw new Error(prepared.error ?? 'Failed to prepare revoke request.');
+        }
+        if (!cancelled) {
+          setPreparedSignerLabel(prepared.signerLabel ?? signerLabel ?? null);
+          setPreparedSignerFingerprint(prepared.signerFingerprint ?? signerFingerprint ?? null);
+        }
+      } catch (loadError) {
+        if (!cancelled) {
+          setError(loadError instanceof Error ? loadError.message : String(loadError));
+        }
+      }
+    };
+
+    void loadSignerSummary();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [signerFingerprint, signerId, signerLabel, walletId]);
 
   const handleRevoke = async () => {
     if (!ready || !authenticated) {
@@ -83,28 +117,19 @@ export default function RevokeSignerFlow({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          accountAddress,
           walletId,
           signerId,
-          patchBody: prepared.patchBody,
+          callbackUrl,
+          chainId,
           authorizationSignature: signature,
         }),
       });
-      const committed = (await commitResponse.json()) as { error?: string };
-      if (!commitResponse.ok) {
+      const committed = (await commitResponse.json()) as { redirectUrl?: string; error?: string };
+      if (!commitResponse.ok || !committed.redirectUrl) {
         throw new Error(committed.error ?? 'Failed to revoke signer.');
       }
-
-      const bundle: PrivySignerRevokeBundle = {
-        version: 2,
-        action: 'revoke',
-        accountAddress: prepared.accountAddress,
-        chainId,
-        walletId,
-        signerType: 'device_authorization_key',
-        signerId,
-        revokedAt: Math.floor(Date.now() / 1000),
-      };
-      setRedirectUrl(buildRedirectUrl(callbackUrl, bundle));
+      setRedirectUrl(committed.redirectUrl);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : String(nextError));
     } finally {
@@ -120,14 +145,14 @@ export default function RevokeSignerFlow({
           <CardDescription>Remove this device signer from your wallet, then hand the result back to the CLI.</CardDescription>
         </CardHeader>
         <CardContent className={styles.content}>
-          {signerLabel ? (
+          {preparedSignerLabel ? (
             <p className={styles.helper}>
-              Signer label: <code>{signerLabel}</code>
+              Signer label: <code>{preparedSignerLabel}</code>
             </p>
           ) : null}
-          {signerFingerprint ? (
+          {preparedSignerFingerprint ? (
             <p className={styles.helper}>
-              Signer fingerprint: <code>{signerFingerprint}</code>
+              Signer fingerprint: <code>{preparedSignerFingerprint}</code>
             </p>
           ) : null}
           <p className={styles.helper}>
@@ -148,7 +173,7 @@ export default function RevokeSignerFlow({
               onClick={handleRevoke}
               disabled={isPending}
             >
-              {isPending ? 'Revoking…' : 'Revoke Signer'}
+          {isPending ? 'Revoking…' : 'Revoke Signer'}
             </Button>
           )}
         </CardFooter>

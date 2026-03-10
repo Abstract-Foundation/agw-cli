@@ -7,7 +7,12 @@ const CALLBACK_PAYLOAD_QUERY_KEY = "session";
 export interface PrivySignerInitBundlePayload {
   version: 2;
   action: "init";
+  state: string;
+  iss: string;
+  iat: number;
+  exp: number;
   accountAddress: string;
+  underlyingSignerAddress: string;
   chainId: number;
   walletId: string;
   signerType: "device_authorization_key";
@@ -23,7 +28,12 @@ export interface PrivySignerInitBundlePayload {
 export interface PrivySignerRevokeBundlePayload {
   version: 2;
   action: "revoke";
+  state: string;
+  iss: string;
+  iat: number;
+  exp: number;
   accountAddress: string;
+  underlyingSignerAddress: string;
   chainId: number;
   walletId: string;
   signerType: "device_authorization_key";
@@ -144,11 +154,17 @@ function parsePayloadObject(rawPayload: string): Record<string, unknown> {
   throw new Error("Invalid session bundle payload. Expected JSON or base64url-encoded JSON.");
 }
 
-export function parseSignerBundleInput(input: string): PrivySignerBundlePayload {
-  const payload = parsePayloadObject(resolvePayloadCandidate(input));
+export function parseSignerBundlePayload(payload: Record<string, unknown>): PrivySignerBundlePayload {
+  const state = parseNonEmptyString(payload.state, "state");
+  const iss = parseNonEmptyString(payload.iss, "iss");
+  const iat = parsePositiveInt(payload.iat, "iat");
+  const exp = parsePositiveInt(payload.exp, "exp");
 
   if (typeof payload.accountAddress !== "string" || !isAddress(payload.accountAddress)) {
     throw new Error("Invalid signer bundle accountAddress.");
+  }
+  if (typeof payload.underlyingSignerAddress !== "string" || !isAddress(payload.underlyingSignerAddress)) {
+    throw new Error("Invalid signer bundle underlyingSignerAddress.");
   }
 
   const chainId = parsePositiveInt(payload.chainId, "chainId");
@@ -174,7 +190,12 @@ export function parseSignerBundleInput(input: string): PrivySignerBundlePayload 
     return {
       version: 2,
       action: "init",
+      state,
+      iss,
+      iat,
+      exp,
       accountAddress: payload.accountAddress,
+      underlyingSignerAddress: payload.underlyingSignerAddress,
       chainId,
       walletId,
       signerType,
@@ -192,7 +213,12 @@ export function parseSignerBundleInput(input: string): PrivySignerBundlePayload 
     return {
       version: 2,
       action: "revoke",
+      state,
+      iss,
+      iat,
+      exp,
       accountAddress: payload.accountAddress,
+      underlyingSignerAddress: payload.underlyingSignerAddress,
       chainId,
       walletId,
       signerType,
@@ -204,6 +230,10 @@ export function parseSignerBundleInput(input: string): PrivySignerBundlePayload 
   throw new Error(`Invalid signer bundle action "${action}".`);
 }
 
+export function parseSignerBundleInput(input: string): PrivySignerBundlePayload {
+  return parseSignerBundlePayload(parsePayloadObject(resolvePayloadCandidate(input)));
+}
+
 export function parseInitSignerBundleInput(input: string): PrivySignerInitBundlePayload {
   const bundle = parseSignerBundleInput(input);
   if (bundle.action !== "init") {
@@ -212,8 +242,24 @@ export function parseInitSignerBundleInput(input: string): PrivySignerInitBundle
   return bundle;
 }
 
+export function parseInitSignerBundlePayload(payload: Record<string, unknown>): PrivySignerInitBundlePayload {
+  const bundle = parseSignerBundlePayload(payload);
+  if (bundle.action !== "init") {
+    throw new Error(`Invalid signer bundle action "${bundle.action}". Expected "init".`);
+  }
+  return bundle;
+}
+
 export function parseRevokeSignerBundleInput(input: string): PrivySignerRevokeBundlePayload {
   const bundle = parseSignerBundleInput(input);
+  if (bundle.action !== "revoke") {
+    throw new Error(`Invalid signer bundle action "${bundle.action}". Expected "revoke".`);
+  }
+  return bundle;
+}
+
+export function parseRevokeSignerBundlePayload(payload: Record<string, unknown>): PrivySignerRevokeBundlePayload {
+  const bundle = parseSignerBundlePayload(payload);
   if (bundle.action !== "revoke") {
     throw new Error(`Invalid signer bundle action "${bundle.action}". Expected "revoke".`);
   }

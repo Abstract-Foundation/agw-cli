@@ -1,6 +1,6 @@
-import { DEFAULT_POLICY_EXPIRY_SECONDS, DEFAULT_POLICY_FEE_LIMIT, DEFAULT_POLICY_MAX_VALUE_PER_USE } from '@/lib/config';
-import type { DelegatedCapabilitySummary } from '@/lib/session-config';
-import type { SessionPolicyMeta, SessionToolName } from '@/lib/policy-types';
+import { DEFAULT_POLICY_EXPIRY_SECONDS, DEFAULT_POLICY_FEE_LIMIT, DEFAULT_POLICY_MAX_VALUE_PER_USE } from '../config';
+import type { DelegatedCapabilitySummary } from '../session-config';
+import type { SessionPolicyMeta, SessionToolName } from '../policy-types';
 
 const DEFAULT_ENABLED_TOOLS: SessionToolName[] = [
   'get_wallet_address',
@@ -79,6 +79,12 @@ export function buildDefaultPolicyRequest(params: {
         conditions: [
           {
             field_source: 'ethereum_transaction',
+            field: 'chain_id',
+            operator: 'eq',
+            value: String(params.chainId),
+          },
+          {
+            field_source: 'ethereum_transaction',
             field: 'value',
             operator: 'lte',
             value: DEFAULT_POLICY_MAX_VALUE_PER_USE,
@@ -96,6 +102,12 @@ export function buildDefaultPolicyRequest(params: {
         action: 'ALLOW',
         method: 'eth_signTransaction',
         conditions: [
+          {
+            field_source: 'ethereum_transaction',
+            field: 'chain_id',
+            operator: 'eq',
+            value: String(params.chainId),
+          },
           {
             field_source: 'ethereum_transaction',
             field: 'value',

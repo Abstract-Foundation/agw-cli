@@ -1,12 +1,16 @@
 import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
-import { getWalletById, updateWalletWithSignature } from '@/lib/server/privy-api';
+import { buildRedirectUrl, isLoopbackCallbackUrl } from '@/lib/redirect';
+import { buildSignedCallbackPayload, signCallbackPayload } from '@/lib/server/callback-attestation';
+import { computeSignerFingerprint, getKeyQuorumById, getWalletById, updateWalletWithSignature } from '@/lib/server/privy-api';
 
 interface RevokeRequestBody {
+  accountAddress?: string;
   walletId?: string;
   signerId?: string;
+  callbackUrl?: string;
+  chainId?: number;
   authorizationSignature?: string;
-  patchBody?: Record<string, unknown>;
 }
 
 async function buildRevokePatchBody(walletId: string, signerId: string) {
@@ -40,10 +44,13 @@ export async function GET(request: Request) {
     }
 
     const { wallet, patchBody } = await buildRevokePatchBody(walletId, signerId);
+    const signer = await getKeyQuorumById(signerId);
     return NextResponse.json({
       walletId: wallet.id,
       accountAddress: wallet.address,
       patchBody,
+      signerLabel: signer.displayName,
+      signerFingerprint: computeSignerFingerprint(signer.publicKeys[0]),
     });
   } catch (error) {
     return NextResponse.json(
@@ -58,20 +65,17 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as RevokeRequestBody;
-    if (!body.walletId || !body.signerId || !body.authorizationSignature || !body.patchBody) {
+    if (!body.accountAddress || !body.walletId || !body.signerId || !body.authorizationSignature || !body.callbackUrl || !body.chainId) {
       return NextResponse.json(
-        { error: 'Missing required fields: walletId, signerId, authorizationSignature, patchBody.' },
+        { error: 'Missing required fields: accountAddress, walletId, signerId, callbackUrl, chainId, authorizationSignature.' },
         { status: 400 },
       );
+    }
+    if (!isLoopbackCallbackUrl(body.callbackUrl)) {
+      return NextResponse.json({ error: 'Invalid callbackUrl.' }, { status: 400 });
     }
 
     const { patchBody } = await buildRevokePatchBody(body.walletId, body.signerId);
-    if (JSON.stringify(patchBody) !== JSON.stringify(body.patchBody)) {
-      return NextResponse.json(
-        { error: 'patchBody does not match the current wallet signer state.' },
-        { status: 400 },
-      );
-    }
 
     const updatedWallet = await updateWalletWithSignature({
       walletId: body.walletId,
@@ -79,11 +83,32 @@ export async function POST(request: Request) {
       idempotencyKey: randomUUID(),
       body: patchBody,
     });
+    if (updatedWallet.additionalSigners.some(entry => entry.signerId === body.signerId)) {
+      throw new Error(`Signer ${body.signerId} is still attached to wallet ${updatedWallet.id}.`);
+    }
+
+    const callbackState = new URL(body.callbackUrl).searchParams.get('state');
+    if (!callbackState || !callbackState.trim()) {
+      return NextResponse.json({ error: 'callbackUrl is missing required `state` parameter.' }, { status: 400 });
+    }
+
+    const token = signCallbackPayload(
+      buildSignedCallbackPayload({
+        version: 2 as const,
+        action: 'revoke' as const,
+        state: callbackState.trim(),
+        accountAddress: body.accountAddress,
+        underlyingSignerAddress: updatedWallet.address,
+        chainId: body.chainId,
+        walletId: updatedWallet.id,
+        signerType: 'device_authorization_key' as const,
+        signerId: body.signerId,
+        revokedAt: Math.floor(Date.now() / 1000),
+      }),
+    );
 
     return NextResponse.json({
-      walletId: updatedWallet.id,
-      accountAddress: updatedWallet.address,
-      remainingSignerIds: updatedWallet.additionalSigners.map(entry => entry.signerId),
+      redirectUrl: buildRedirectUrl(body.callbackUrl, token),
     });
   } catch (error) {
     return NextResponse.json(

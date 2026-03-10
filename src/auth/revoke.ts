@@ -1,6 +1,4 @@
 import { randomBytes } from "node:crypto";
-import { getWalletById } from "../privy/admin.js";
-import { resolvePrivyAppCredentials } from "../privy/client.js";
 import type { AgwSessionData } from "../session/types.js";
 import type { Logger } from "../utils/logger.js";
 import {
@@ -9,7 +7,8 @@ import {
   resolveAppUrl,
   validateAppUrl,
 } from "./bootstrap-internals.js";
-import { parseRevokeSignerBundleInput } from "./callback.js";
+import { parseRevokeSignerBundlePayload } from "./callback.js";
+import { resolveCallbackVerificationConfig, verifySignedCallbackToken } from "./attestation.js";
 import { startCallbackServer } from "./handoff.js";
 
 export interface RemoteRevokeOptions {
@@ -29,6 +28,7 @@ export async function runRemoteRevokeFlow(
   validateAppUrl(appUrl);
 
   const callbackState = randomBytes(16).toString("hex");
+  const callbackVerificationConfig = await resolveCallbackVerificationConfig(appUrl);
   const callbackServer = await startCallbackServer({
     expectedState: callbackState,
   });
@@ -39,6 +39,7 @@ export async function runRemoteRevokeFlow(
       chainId: session.chainId,
       callbackUrl: callbackServer.callbackUrl,
       callbackState,
+      accountAddress: session.accountAddress,
       walletId: session.privyWalletId,
       signerId: session.privySignerBinding.id,
       signerLabel: session.privySignerBinding.label,
@@ -55,7 +56,11 @@ export async function runRemoteRevokeFlow(
 
     logger.info("Waiting for hosted signer revocation approval in the browser (callback window: 15 minutes)...");
     const payload = await callbackServer.waitForPayload();
-    const bundle = parseRevokeSignerBundleInput(payload);
+    const envelope = verifySignedCallbackToken<Record<string, unknown>>(payload, callbackVerificationConfig);
+    const bundle = parseRevokeSignerBundlePayload(envelope.payload);
+    if (bundle.state !== callbackState) {
+      throw new Error("Revoke bundle state does not match the revoke request.");
+    }
     assertRevokeBundleMatchesRequest({
       bundle,
       requestedChainId: session.chainId,
@@ -66,11 +71,13 @@ export async function runRemoteRevokeFlow(
     if (bundle.accountAddress.toLowerCase() !== session.accountAddress.toLowerCase()) {
       throw new Error(`Revoke bundle account address (${bundle.accountAddress}) does not match the active session.`);
     }
-
-    const { appId, appSecret } = resolvePrivyAppCredentials();
-    const wallet = await getWalletById({ appId, appSecret }, session.privyWalletId);
-    if (wallet.additionalSigners.some(entry => entry.signerId === session.privySignerBinding?.id)) {
-      throw new Error(`Signer ${session.privySignerBinding.id} is still attached to wallet ${session.privyWalletId}.`);
+    if (
+      session.underlyingSignerAddress &&
+      bundle.underlyingSignerAddress.toLowerCase() !== session.underlyingSignerAddress.toLowerCase()
+    ) {
+      throw new Error(
+        `Revoke bundle underlying signer address (${bundle.underlyingSignerAddress}) does not match the active session.`,
+      );
     }
   } finally {
     await callbackServer.close().catch(() => undefined);

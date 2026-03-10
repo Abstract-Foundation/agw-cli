@@ -14,13 +14,14 @@ export type SessionWizardStep =
 interface SessionWizardState {
   currentStep: SessionWizardStep;
   agwAddress: string | null;
+  signerAddress: string | null;
   dangerAcknowledged: boolean;
   policyPreview: PolicyPreview | null;
   error: string | null;
   redirectUrl: string | null;
   provisionedSigner: ProvisionedSignerResult | null;
   existingSigners: ExistingAgwMcpSignerSummary[];
-  syncConnection: (input: { isConnected: boolean; address: string | null }) => void;
+  syncConnection: (input: { isConnected: boolean; agwAddress: string | null; signerAddress: string | null }) => void;
   setDangerAcknowledged: (value: boolean) => void;
   setValidationError: (error: string | null) => void;
   proceedToCreating: (preview: PolicyPreview) => void;
@@ -32,23 +33,26 @@ interface SessionWizardState {
 const useSessionWizardStore = create<SessionWizardState>(set => ({
   currentStep: 'not_logged_in',
   agwAddress: null,
+  signerAddress: null,
   dangerAcknowledged: false,
   policyPreview: null,
   error: null,
   redirectUrl: null,
   provisionedSigner: null,
   existingSigners: [],
-  syncConnection: ({ isConnected, address }) =>
+  syncConnection: ({ isConnected, agwAddress, signerAddress }) =>
     set(state => {
-      if (!isConnected || !address) {
+      if (!isConnected || !agwAddress || !signerAddress) {
         return {
           agwAddress: null,
+          signerAddress: null,
           currentStep: state.currentStep === 'creating' || state.currentStep === 'success' ? state.currentStep : 'not_logged_in',
         };
       }
 
       return {
-        agwAddress: address,
+        agwAddress,
+        signerAddress,
         currentStep: state.currentStep === 'not_logged_in' ? 'select_policy' : state.currentStep,
       };
     }),

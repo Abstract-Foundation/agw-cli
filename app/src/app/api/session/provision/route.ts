@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { buildDefaultPolicyRequest } from '@/lib/server/default-policy';
 import {
@@ -8,10 +9,12 @@ import {
   findWalletByAddress,
   listExistingAgwMcpSigners,
 } from '@/lib/server/privy-api';
+import { buildSignedCallbackPayload, signCallbackPayload } from '@/lib/server/callback-attestation';
 import type { ProvisionedSignerResult } from '@/lib/session-config';
 
 interface ProvisionRequestBody {
-  accountAddress?: string;
+  agwAccountAddress?: string;
+  signerAddress?: string;
   chainId?: number;
   authPublicKey?: string;
 }
@@ -23,8 +26,11 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as ProvisionRequestBody;
 
-    if (!body.accountAddress || !ADDRESS_PATTERN.test(body.accountAddress)) {
-      return NextResponse.json({ error: 'Invalid accountAddress.' }, { status: 400 });
+    if (!body.agwAccountAddress || !ADDRESS_PATTERN.test(body.agwAccountAddress)) {
+      return NextResponse.json({ error: 'Invalid agwAccountAddress.' }, { status: 400 });
+    }
+    if (!body.signerAddress || !ADDRESS_PATTERN.test(body.signerAddress)) {
+      return NextResponse.json({ error: 'Invalid signerAddress.' }, { status: 400 });
     }
     if (!Number.isInteger(body.chainId) || body.chainId! <= 0) {
       return NextResponse.json({ error: 'Invalid chainId.' }, { status: 400 });
@@ -34,7 +40,7 @@ export async function POST(request: Request) {
     }
 
     const chainId = body.chainId as number;
-    const wallet = await findWalletByAddress(body.accountAddress);
+    const wallet = await findWalletByAddress(body.signerAddress);
     const existingSigners = await listExistingAgwMcpSigners(wallet);
     const signerFingerprint = computeSignerFingerprint(body.authPublicKey);
     const signerLabel = buildSignerLabel(signerFingerprint);
@@ -51,14 +57,36 @@ export async function POST(request: Request) {
     const policy = await createPolicy({
       version: defaultPolicy.version,
       name: defaultPolicy.name,
+      owner_id: signer.id,
       chain_type: defaultPolicy.chain_type,
       rules: defaultPolicy.rules,
     });
 
+    const provisionAttestation = signCallbackPayload(
+      buildSignedCallbackPayload({
+        kind: 'provision' as const,
+        nonce: randomUUID(),
+        accountAddress: body.agwAccountAddress,
+        underlyingSignerAddress: body.signerAddress,
+        chainId,
+        authPublicKey: body.authPublicKey,
+        walletId: wallet.id,
+        signerId: signer.id,
+        policyIds: [policy.id],
+        signerFingerprint,
+        signerLabel,
+        signerCreatedAt: signer.createdAt,
+        policyMeta: defaultPolicy.policyMeta,
+        capabilitySummary: defaultPolicy.capabilitySummary,
+      }, 30 * 60),
+    );
     const result: ProvisionedSignerResult = {
       walletId: wallet.id,
+      agwAccountAddress: body.agwAccountAddress,
+      signerAddress: body.signerAddress,
       signerType: 'device_authorization_key',
       signerId: signer.id,
+      provisionAttestation,
       policyIds: [policy.id],
       signerFingerprint,
       signerLabel,

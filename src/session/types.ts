@@ -68,6 +68,7 @@ export interface AgwSignerBinding {
 
 export interface AgwSessionData {
   accountAddress: string;
+  underlyingSignerAddress?: string;
   chainId: number;
   createdAt: number;
   updatedAt: number;

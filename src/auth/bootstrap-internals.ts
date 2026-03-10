@@ -244,6 +244,7 @@ export function buildRevokeLaunchUrl(input: {
   chainId: number;
   callbackUrl: string;
   callbackState: string;
+  accountAddress: string;
   walletId: string;
   signerId: string;
   signerLabel?: string;
@@ -255,6 +256,7 @@ export function buildRevokeLaunchUrl(input: {
   const launchUrl = new URL("/session/revoke", input.appUrl);
   launchUrl.searchParams.set("callback_url", callbackUrl.toString());
   launchUrl.searchParams.set("chain_id", String(input.chainId));
+  launchUrl.searchParams.set("account_address", input.accountAddress);
   launchUrl.searchParams.set("wallet_id", input.walletId);
   launchUrl.searchParams.set("signer_id", input.signerId);
   launchUrl.searchParams.set("action", "revoke");

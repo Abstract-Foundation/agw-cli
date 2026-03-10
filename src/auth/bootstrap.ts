@@ -1,12 +1,10 @@
 import open from "open";
 import { randomBytes } from "node:crypto";
 import { computePublicKeyFingerprint, generateP256KeyPair, publicKeyToBase64 } from "../privy/auth.js";
-import { getKeyQuorumById, getWalletById } from "../privy/admin.js";
-import { resolvePrivyAppCredentials } from "../privy/client.js";
 import type { Logger } from "../utils/logger.js";
 import { SessionStorage } from "../session/storage.js";
 import type { AgwSessionData } from "../session/types.js";
-import { parseInitSignerBundleInput } from "./callback.js";
+import { parseInitSignerBundlePayload } from "./callback.js";
 import {
   acquireBootstrapLock,
   assertBundleMatchesBootstrapRequest,
@@ -16,6 +14,7 @@ import {
   restoreStorageSnapshot,
   validateAppUrl,
 } from "./bootstrap-internals.js";
+import { resolveCallbackVerificationConfig, verifySignedCallbackToken } from "./attestation.js";
 import { startCallbackServer } from "./handoff.js";
 import { materializeSessionFromBundle, resolveStorageDir } from "./provision.js";
 
@@ -44,6 +43,7 @@ export async function runBootstrapFlow(logger: Logger, options: BootstrapOptions
   const publicKeyBase64 = publicKeyToBase64(keyPair.publicKeyDer);
   const expectedFingerprint = computePublicKeyFingerprint(keyPair.publicKeyDer);
   const callbackState = randomBytes(16).toString("hex");
+  const callbackVerificationConfig = await resolveCallbackVerificationConfig(appUrl);
   let callbackServer: Awaited<ReturnType<typeof startCallbackServer>> | null = null;
 
   try {
@@ -69,49 +69,17 @@ export async function runBootstrapFlow(logger: Logger, options: BootstrapOptions
     logger.info("Waiting for hosted session approval in the browser (callback window: 15 minutes)...");
 
     const sessionPayload = await callbackServer.waitForPayload();
-    const bundle = parseInitSignerBundleInput(sessionPayload);
+    const envelope = verifySignedCallbackToken<Record<string, unknown>>(sessionPayload, callbackVerificationConfig);
+    const bundle = parseInitSignerBundlePayload(envelope.payload);
+    if (bundle.state !== callbackState) {
+      throw new Error("Signer bundle state does not match the bootstrap request.");
+    }
     assertBundleMatchesBootstrapRequest({
       bundle,
       requestedChainId: options.chainId,
     });
-    const { appId, appSecret } = resolvePrivyAppCredentials();
-    const adminConfig = { appId, appSecret };
-    const wallet = await getWalletById(
-      adminConfig,
-      bundle.walletId,
-    );
-    if (wallet.address.toLowerCase() !== bundle.accountAddress.toLowerCase()) {
-      throw new Error(`Signer bundle account address (${bundle.accountAddress}) does not match wallet ${wallet.id}.`);
-    }
-
-    const additionalSigner = wallet.additionalSigners.find(entry => entry.signerId === bundle.signerId);
-    if (!additionalSigner) {
-      throw new Error(`Signer ${bundle.signerId} is not attached to wallet ${wallet.id}.`);
-    }
-    const callbackPolicyIds = [...bundle.policyIds].sort();
-    const walletPolicyIds = [...additionalSigner.policyIds].sort();
-    if (
-      callbackPolicyIds.length !== walletPolicyIds.length ||
-      callbackPolicyIds.some((policyId, index) => policyId !== walletPolicyIds[index])
-    ) {
-      throw new Error(`Signer ${bundle.signerId} policy ids do not match the verified wallet binding.`);
-    }
-
-    const signer = await getKeyQuorumById(
-      adminConfig,
-      bundle.signerId,
-    );
-    if (!signer.publicKeys.includes(publicKeyBase64)) {
-      throw new Error(`Signer ${bundle.signerId} is not bound to the expected device public key.`);
-    }
     if (bundle.signerFingerprint !== expectedFingerprint) {
       throw new Error(`Signer fingerprint (${bundle.signerFingerprint}) does not match the local device key.`);
-    }
-    if (bundle.signerFingerprint !== computePublicKeyFingerprint(publicKeyBase64)) {
-      throw new Error(`Signer fingerprint (${bundle.signerFingerprint}) does not match the verified signer record.`);
-    }
-    if (bundle.signerLabel !== signer.displayName) {
-      throw new Error(`Signer label (${bundle.signerLabel}) does not match the verified signer record.`);
     }
 
     const authKeyfilePath = storage.path.replace(/session\.json$/, "privy-auth.key");

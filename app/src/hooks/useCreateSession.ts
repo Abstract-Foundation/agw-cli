@@ -3,14 +3,14 @@
 import { useCallback, useState } from 'react';
 import type { Address } from 'viem';
 import { useSessionSigners } from '@privy-io/react-auth';
-import type { PolicyPreview } from '@/lib/policy-types';
-import type { PrivySignerInitBundle, ProvisionedSignerResult } from '@/lib/session-config';
+import type { ProvisionedSignerResult } from '@/lib/session-config';
 
 export interface CreateAgentSignerInput {
-  accountAddress: Address;
+  agwAccountAddress: Address;
+  signerAddress: Address;
   chainId: number;
   authPublicKey: string;
-  policyPayload: PolicyPreview['policyPayload'];
+  callbackUrl: string;
 }
 
 export function useCreateAgentSigner() {
@@ -20,11 +20,12 @@ export function useCreateAgentSigner() {
 
   const createAgentSigner = useCallback(
     async ({
-      accountAddress,
+      agwAccountAddress,
+      signerAddress,
       chainId,
       authPublicKey,
-      policyPayload,
-    }: CreateAgentSignerInput): Promise<{ bundle: PrivySignerInitBundle; provisionedSigner: ProvisionedSignerResult }> => {
+      callbackUrl,
+    }: CreateAgentSignerInput): Promise<{ redirectUrl: string; provisionedSigner: ProvisionedSignerResult }> => {
       setIsPending(true);
       setError(null);
 
@@ -35,7 +36,8 @@ export function useCreateAgentSigner() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            accountAddress,
+            agwAccountAddress,
+            signerAddress,
             chainId,
             authPublicKey,
           }),
@@ -46,7 +48,7 @@ export function useCreateAgentSigner() {
         }
 
         await addSessionSigners({
-          address: accountAddress,
+          address: signerAddress,
           signers: [
             {
               signerId: provisionBody.signerId,
@@ -55,24 +57,23 @@ export function useCreateAgentSigner() {
           ],
         });
 
-        const bundle: PrivySignerInitBundle = {
-          version: 2,
-          action: 'init',
-          accountAddress,
-          chainId,
-          walletId: provisionBody.walletId,
-          signerType: 'device_authorization_key',
-          signerId: provisionBody.signerId,
-          policyIds: provisionBody.policyIds,
-          signerFingerprint: provisionBody.signerFingerprint,
-          signerLabel: provisionBody.signerLabel,
-          signerCreatedAt: provisionBody.signerCreatedAt,
-          policyMeta: provisionBody.policyMeta ?? policyPayload.policyMeta!,
-          capabilitySummary: provisionBody.capabilitySummary,
-        };
+        const finalizeResponse = await fetch('/api/session/finalize-init', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            callbackUrl,
+            provisionAttestation: provisionBody.provisionAttestation,
+          }),
+        });
+        const finalized = (await finalizeResponse.json()) as { redirectUrl?: string; error?: string };
+        if (!finalizeResponse.ok || !finalized.redirectUrl) {
+          throw new Error(finalized.error ?? 'Failed to finalize AGW MCP signer provisioning.');
+        }
 
         return {
-          bundle,
+          redirectUrl: finalized.redirectUrl,
           provisionedSigner: provisionBody,
         };
       } catch (err) {

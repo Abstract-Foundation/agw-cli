@@ -43,6 +43,7 @@ export function materializeSessionFromBundle(
 
   return {
     accountAddress: bundle.accountAddress,
+    underlyingSignerAddress: bundle.underlyingSignerAddress,
     chainId: bundle.chainId,
     createdAt: now,
     updatedAt: now,

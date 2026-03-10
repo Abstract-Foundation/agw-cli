@@ -13,7 +13,6 @@ import {
 } from '@/components/Card';
 import { useCreateAgentSigner } from '@/hooks/useCreateSession';
 import { useSessionWizardState } from '@/hooks/useSessionWizardState';
-import { buildRedirectUrl } from '@/lib/redirect';
 import styles from '../styles.module.scss';
 
 export default function Creating({
@@ -28,6 +27,7 @@ export default function Creating({
   const hasStartedRef = useRef(false);
   const {
     agwAddress,
+    signerAddress,
     policyPreview,
     markCreationError,
     markCreationSuccess,
@@ -44,21 +44,25 @@ export default function Creating({
     const run = async () => {
       try {
         if (!agwAddress) {
-          throw new Error('Wallet is not connected.');
+          throw new Error('AGW wallet is not connected.');
+        }
+        if (!signerAddress) {
+          throw new Error('Underlying signer is not connected.');
         }
         if (!policyPreview) {
           throw new Error('Policy preview is missing.');
         }
-        const accountAddress = agwAddress as `0x${string}`;
+        const agwAccountAddress = agwAddress as `0x${string}`;
+        const underlyingSignerAddress = signerAddress as `0x${string}`;
 
-        const { bundle, provisionedSigner } = await createAgentSigner({
-          accountAddress,
+        const { redirectUrl, provisionedSigner } = await createAgentSigner({
+          agwAccountAddress,
+          signerAddress: underlyingSignerAddress,
           chainId: chain.id,
           authPublicKey,
-          policyPayload: policyPreview.policyPayload,
+          callbackUrl,
         });
 
-        const redirectUrl = buildRedirectUrl(callbackUrl, bundle);
         markCreationSuccess({ redirectUrl, provisionedSigner });
       } catch (error) {
         markCreationError(error instanceof Error ? error.message : String(error));
@@ -68,6 +72,7 @@ export default function Creating({
     void run();
   }, [
     agwAddress,
+    signerAddress,
     policyPreview,
     createAgentSigner,
     authPublicKey,

@@ -85,12 +85,14 @@ describe('onboarding params', () => {
       new URLSearchParams({
         callback_url: 'http://127.0.0.1:8787/cb/abc',
         chain_id: '11124',
+        account_address: '0x6Ce3942732c17CB3E8c7bd49169DEe48c520212C',
         wallet_id: 'wallet_123',
         signer_id: 'quorum_456',
       }),
     );
 
     expect(result.ok).toBe(true);
+    expect(result.params?.accountAddress).toBe('0x6Ce3942732c17CB3E8c7bd49169DEe48c520212C');
     expect(result.params?.walletId).toBe('wallet_123');
     expect(result.params?.signerId).toBe('quorum_456');
   });

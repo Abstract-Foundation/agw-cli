@@ -70,6 +70,7 @@ program
   .description("Run the local stdio MCP server")
   .option("--chain-id <chainId>", "EVM chain id (env: AGW_MCP_CHAIN_ID)")
   .option("--rpc-url <rpcUrl>", "RPC URL override (env: AGW_MCP_RPC_URL)")
+  .option("--app-url <url>", "Hosted AGW MCP app URL used for runtime proxying (env: AGW_MCP_APP_URL)")
   .option("--storage-dir <dir>", "Session storage directory")
   .action(async options => {
     const networkConfig = resolveNetworkConfig({
@@ -81,6 +82,7 @@ program
     const server = new AgwMcpServer({
       chainId: networkConfig.chainId,
       rpcUrl: networkConfig.rpcUrl,
+      appUrl: options.appUrl,
       storageDir: options.storageDir,
     });
     await server.start();

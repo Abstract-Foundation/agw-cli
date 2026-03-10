@@ -44,6 +44,7 @@ export default async function RevokeSessionPage({
       <RevokeSignerFlow
         callbackUrl={result.params.callbackUrl}
         chainId={result.params.chainId}
+        accountAddress={result.params.accountAddress}
         walletId={result.params.walletId}
         signerId={result.params.signerId}
         signerLabel={result.params.signerLabel}

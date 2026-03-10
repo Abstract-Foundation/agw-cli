@@ -12,6 +12,7 @@ export interface AgwMcpServerOptions {
   chainId?: number;
   rpcUrl?: string;
   storageDir?: string;
+  appUrl?: string;
 }
 
 export class AgwMcpServer {
@@ -26,6 +27,7 @@ export class AgwMcpServer {
       storageDir: options.storageDir,
       chainId: options.chainId,
       rpcUrl: options.rpcUrl,
+      appUrl: options.appUrl,
     });
     this.auditLog = new AuditLog(options.storageDir);
 

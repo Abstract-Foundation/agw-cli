@@ -15,6 +15,7 @@ export interface PrivySignerInitBundle {
   version: 2;
   action: 'init';
   accountAddress: string;
+  underlyingSignerAddress: string;
   chainId: number;
   walletId: string;
   signerType: 'device_authorization_key';
@@ -31,6 +32,7 @@ export interface PrivySignerRevokeBundle {
   version: 2;
   action: 'revoke';
   accountAddress: string;
+  underlyingSignerAddress: string;
   chainId: number;
   walletId: string;
   signerType: 'device_authorization_key';
@@ -49,8 +51,11 @@ export interface ExistingAgwMcpSignerSummary {
 
 export interface ProvisionedSignerResult {
   walletId: string;
+  agwAccountAddress: string;
+  signerAddress: string;
   signerType: 'device_authorization_key';
   signerId: string;
+  provisionAttestation: string;
   policyIds: string[];
   signerFingerprint: string;
   signerLabel: string;
