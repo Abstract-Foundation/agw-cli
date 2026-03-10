@@ -14,6 +14,21 @@ function buildValidSession(tmpDir: string, overrides: Partial<AgwSessionData> = 
     updatedAt: now,
     status: "active",
     privyWalletId: "wallet_test123",
+    privySignerBinding: {
+      type: "device_authorization_key",
+      canonicalType: "key_quorum",
+      id: "quorum_test789",
+      policyIds: ["policy_test456"],
+      fingerprint: "aa11bb22cc33:dd44ee55ff66",
+      label: "AGW MCP aa11bb22cc33:dd44ee55ff66",
+      createdAt: now,
+    },
+    privyPolicyIds: ["policy_test456"],
+    privySignerId: "quorum_test789",
+    privySignerType: "device_authorization_key",
+    privySignerFingerprint: "aa11bb22cc33:dd44ee55ff66",
+    privySignerLabel: "AGW MCP aa11bb22cc33:dd44ee55ff66",
+    privySignerCreatedAt: now,
     privyPolicyId: "policy_test456",
     privyQuorumId: "quorum_test789",
     privyAuthKeyRef: {
@@ -52,8 +67,8 @@ describe("SessionStorage", () => {
     expect(loaded?.accountAddress).toBe("0x1111111111111111111111111111111111111111");
     expect(loaded?.status).toBe("active");
     expect(loaded?.privyWalletId).toBe("wallet_test123");
-    expect(loaded?.privyPolicyId).toBe("policy_test456");
-    expect(loaded?.privyQuorumId).toBe("quorum_test789");
+    expect(loaded?.privySignerBinding?.id).toBe("quorum_test789");
+    expect(loaded?.privySignerBinding?.policyIds).toEqual(["policy_test456"]);
     expect(loaded?.privyAuthKeyRef).toBeDefined();
     expect(loaded!.privyAuthKeyRef!.kind).toBe("keyfile");
     expect(loaded!.privyAuthKeyRef!.value).toBe(path.join(tmpDir, "privy-auth.key"));
@@ -100,6 +115,7 @@ describe("SessionStorage", () => {
     expect(loaded?.status).toBe("active");
     expect(loaded?.privyWalletId).toBeUndefined();
     expect(loaded?.privyAuthKeyRef).toBeUndefined();
+    expect(loaded?.privySignerBinding).toBeUndefined();
   });
 
   it("deletes both session file and auth keyfile", () => {

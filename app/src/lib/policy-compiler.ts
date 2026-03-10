@@ -286,6 +286,19 @@ export function toPolicyPreview(
 
 export function buildDefaultPolicyPreview(nowUnixSeconds = Math.floor(Date.now() / 1000)): PolicyPreview {
   const preset = BUILT_IN_POLICY_PRESETS.full_app_control;
+  const enabledTools = [
+    'get_wallet_address',
+    'get_balances',
+    'get_token_list',
+    'get_session_status',
+    'preview_transaction',
+    'sign_transaction',
+    'send_transaction',
+    'send_calls',
+    'write_contract',
+    'deploy_contract',
+    'revoke_session',
+  ] as SessionToolName[];
 
   return {
     presetId: preset.id,
@@ -303,12 +316,15 @@ export function buildDefaultPolicyPreview(nowUnixSeconds = Math.floor(Date.now()
         version: 1,
         mode: 'guided',
         presetId: preset.id,
-        presetLabel: preset.label,
-        enabledTools: [...ALL_SESSION_TOOLS],
+        presetLabel: 'AGW MCP Default',
+        enabledTools,
         selectedAppIds: [],
         selectedContractAddresses: [],
         unverifiedAppIds: [],
-        warnings: [],
+        warnings: [
+          'This signer can submit transactions and typed-data signatures within the remote spend and time limits.',
+          'Plain personal_sign requests are not enabled in the default policy.',
+        ],
         generatedAt: nowUnixSeconds,
       },
     },

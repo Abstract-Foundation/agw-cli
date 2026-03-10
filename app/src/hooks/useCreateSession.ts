@@ -2,43 +2,78 @@
 
 import { useCallback, useState } from 'react';
 import type { Address } from 'viem';
+import { useSessionSigners } from '@privy-io/react-auth';
 import type { PolicyPreview } from '@/lib/policy-types';
-import type { PrivySignerBundle } from '@/lib/session-config';
+import type { PrivySignerInitBundle, ProvisionedSignerResult } from '@/lib/session-config';
 
 export interface CreateAgentSignerInput {
   accountAddress: Address;
   chainId: number;
+  authPublicKey: string;
   policyPayload: PolicyPreview['policyPayload'];
-  delegateWallet: (params: {
-    address: string;
-    chainType: 'ethereum';
-  }) => Promise<unknown>;
 }
 
 export function useCreateAgentSigner() {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { addSessionSigners } = useSessionSigners();
 
   const createAgentSigner = useCallback(
     async ({
       accountAddress,
       chainId,
+      authPublicKey,
       policyPayload,
-      delegateWallet,
-    }: CreateAgentSignerInput): Promise<PrivySignerBundle> => {
+    }: CreateAgentSignerInput): Promise<{ bundle: PrivySignerInitBundle; provisionedSigner: ProvisionedSignerResult }> => {
       setIsPending(true);
       setError(null);
 
       try {
-        await delegateWallet({
+        const provisionResponse = await fetch('/api/session/provision', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            accountAddress,
+            chainId,
+            authPublicKey,
+          }),
+        });
+        const provisionBody = (await provisionResponse.json()) as ProvisionedSignerResult & { error?: string };
+        if (!provisionResponse.ok) {
+          throw new Error(provisionBody.error ?? 'Failed to provision AGW MCP signer.');
+        }
+
+        await addSessionSigners({
           address: accountAddress,
-          chainType: 'ethereum',
+          signers: [
+            {
+              signerId: provisionBody.signerId,
+              policyIds: provisionBody.policyIds,
+            },
+          ],
         });
 
-        return {
+        const bundle: PrivySignerInitBundle = {
+          version: 2,
+          action: 'init',
           accountAddress,
           chainId,
-          policyMeta: policyPayload.policyMeta,
+          walletId: provisionBody.walletId,
+          signerType: 'device_authorization_key',
+          signerId: provisionBody.signerId,
+          policyIds: provisionBody.policyIds,
+          signerFingerprint: provisionBody.signerFingerprint,
+          signerLabel: provisionBody.signerLabel,
+          signerCreatedAt: provisionBody.signerCreatedAt,
+          policyMeta: provisionBody.policyMeta ?? policyPayload.policyMeta!,
+          capabilitySummary: provisionBody.capabilitySummary,
+        };
+
+        return {
+          bundle,
+          provisionedSigner: provisionBody,
         };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
@@ -48,7 +83,7 @@ export function useCreateAgentSigner() {
         setIsPending(false);
       }
     },
-    [],
+    [addSessionSigners],
   );
 
   return {

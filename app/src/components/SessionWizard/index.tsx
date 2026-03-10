@@ -11,9 +11,11 @@ import Success from './steps/Success';
 export default function SessionWizard({
   callbackUrl,
   chain,
+  authPublicKey,
 }: {
   callbackUrl: string;
   chain: Chain;
+  authPublicKey: string;
 }) {
   const { currentStep } = useSessionWizardState();
 
@@ -21,9 +23,9 @@ export default function SessionWizard({
     case 'not_logged_in':
       return <NotLoggedIn />;
     case 'select_policy':
-      return <SelectPolicy />;
+      return <SelectPolicy authPublicKey={authPublicKey} />;
     case 'creating':
-      return <Creating callbackUrl={callbackUrl} chain={chain} />;
+      return <Creating callbackUrl={callbackUrl} chain={chain} authPublicKey={authPublicKey} />;
     case 'success':
       return <Success />;
     case 'error':

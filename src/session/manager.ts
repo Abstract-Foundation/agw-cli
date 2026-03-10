@@ -2,7 +2,9 @@ import { PrivyWalletClient, resolvePrivyAppCredentials } from "../privy/client.j
 import { DEFAULT_CHAIN_ID, resolveNetworkConfig, type ResolvedNetworkConfig } from "../config/network.js";
 import type { Logger } from "../utils/logger.js";
 import { SessionStorage } from "./storage.js";
-import type { AgwSessionData, SessionStatus } from "./types.js";
+import { isWriteReadySession, resolveSessionReadiness, type AgwSessionData, type SessionReadiness, type SessionStatus } from "./types.js";
+
+export type SessionManagerReadiness = SessionReadiness | "missing" | "revoked";
 
 export interface SessionManagerOptions {
   storageDir?: string;
@@ -48,6 +50,16 @@ export class SessionManager {
     return this.session.status;
   }
 
+  getSessionReadiness(): SessionManagerReadiness {
+    if (!this.session) {
+      return "missing";
+    }
+    if (this.session.status === "revoked") {
+      return "revoked";
+    }
+    return resolveSessionReadiness(this.session) ?? "missing";
+  }
+
   setSession(session: AgwSessionData): void {
     this.session = session;
     this.storage.save(session);
@@ -87,10 +99,11 @@ export class SessionManager {
   }
 
   getPrivyWalletClient(): PrivyWalletClient {
-    if (!this.session) {
+    const session = this.session;
+    if (!session) {
       throw new Error("session is missing");
     }
-    if (!this.session.privyWalletId || !this.session.privyAuthKeyRef) {
+    if (!isWriteReadySession(session)) {
       throw new Error(
         "write signer is not configured for this session. Re-run `agw-mcp init` and complete delegated access approval.",
       );
@@ -102,8 +115,8 @@ export class SessionManager {
         appId,
         appSecret,
         signerConfig: {
-          walletId: this.session.privyWalletId,
-          authKeyRef: this.session.privyAuthKeyRef,
+          walletId: session.privyWalletId!,
+          authKeyRef: session.privyAuthKeyRef!,
         },
       });
     }

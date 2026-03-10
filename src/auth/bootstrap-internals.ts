@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { PrivySignerBundlePayload } from "./callback.js";
+import type { PrivySignerInitBundlePayload, PrivySignerRevokeBundlePayload } from "./callback.js";
 
 export interface StorageSnapshot {
   keyPath: string;
@@ -211,7 +211,7 @@ export function validateAppUrl(appUrl: string): void {
 }
 
 export function assertBundleMatchesBootstrapRequest(input: {
-  bundle: PrivySignerBundlePayload;
+  bundle: PrivySignerInitBundlePayload;
   requestedChainId: number;
 }): void {
   const { bundle, requestedChainId } = input;
@@ -226,6 +226,7 @@ export function buildLaunchUrl(input: {
   chainId: number;
   callbackUrl: string;
   callbackState: string;
+  authPublicKey: string;
 }): URL {
   const callbackUrl = new URL(input.callbackUrl);
   callbackUrl.searchParams.set("state", input.callbackState);
@@ -233,5 +234,54 @@ export function buildLaunchUrl(input: {
   const launchUrl = new URL("/session/new", input.appUrl);
   launchUrl.searchParams.set("callback_url", callbackUrl.toString());
   launchUrl.searchParams.set("chain_id", String(input.chainId));
+  launchUrl.searchParams.set("auth_pubkey", input.authPublicKey);
+  launchUrl.searchParams.set("action", "init");
   return launchUrl;
+}
+
+export function buildRevokeLaunchUrl(input: {
+  appUrl: string;
+  chainId: number;
+  callbackUrl: string;
+  callbackState: string;
+  walletId: string;
+  signerId: string;
+  signerLabel?: string;
+  signerFingerprint?: string;
+}): URL {
+  const callbackUrl = new URL(input.callbackUrl);
+  callbackUrl.searchParams.set("state", input.callbackState);
+
+  const launchUrl = new URL("/session/revoke", input.appUrl);
+  launchUrl.searchParams.set("callback_url", callbackUrl.toString());
+  launchUrl.searchParams.set("chain_id", String(input.chainId));
+  launchUrl.searchParams.set("wallet_id", input.walletId);
+  launchUrl.searchParams.set("signer_id", input.signerId);
+  launchUrl.searchParams.set("action", "revoke");
+  if (input.signerLabel) {
+    launchUrl.searchParams.set("signer_label", input.signerLabel);
+  }
+  if (input.signerFingerprint) {
+    launchUrl.searchParams.set("signer_fingerprint", input.signerFingerprint);
+  }
+  return launchUrl;
+}
+
+export function assertRevokeBundleMatchesRequest(input: {
+  bundle: PrivySignerRevokeBundlePayload;
+  requestedChainId: number;
+  walletId: string;
+  signerId: string;
+}): void {
+  const { bundle, requestedChainId, walletId, signerId } = input;
+
+  if (bundle.chainId !== requestedChainId) {
+    throw new Error(`Revoke bundle chain id (${bundle.chainId}) does not match requested chain id (${requestedChainId}).`);
+  }
+  if (bundle.walletId !== walletId) {
+    throw new Error(`Revoke bundle wallet id (${bundle.walletId}) does not match requested wallet id (${walletId}).`);
+  }
+  if (bundle.signerId !== signerId) {
+    throw new Error(`Revoke bundle signer id (${bundle.signerId}) does not match requested signer id (${signerId}).`);
+  }
 }

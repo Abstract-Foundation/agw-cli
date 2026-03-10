@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import type { PolicyPreview } from '@/lib/policy-types';
+import type { ExistingAgwMcpSignerSummary, ProvisionedSignerResult } from '@/lib/session-config';
 
 export type SessionWizardStep =
   | 'not_logged_in'
@@ -17,12 +18,14 @@ interface SessionWizardState {
   policyPreview: PolicyPreview | null;
   error: string | null;
   redirectUrl: string | null;
+  provisionedSigner: ProvisionedSignerResult | null;
+  existingSigners: ExistingAgwMcpSignerSummary[];
   syncConnection: (input: { isConnected: boolean; address: string | null }) => void;
   setDangerAcknowledged: (value: boolean) => void;
   setValidationError: (error: string | null) => void;
   proceedToCreating: (preview: PolicyPreview) => void;
   backToPolicySelection: () => void;
-  markCreationSuccess: (input: { redirectUrl: string }) => void;
+  markCreationSuccess: (input: { redirectUrl: string; provisionedSigner: ProvisionedSignerResult }) => void;
   markCreationError: (error: string) => void;
 }
 
@@ -33,6 +36,8 @@ const useSessionWizardStore = create<SessionWizardState>(set => ({
   policyPreview: null,
   error: null,
   redirectUrl: null,
+  provisionedSigner: null,
+  existingSigners: [],
   syncConnection: ({ isConnected, address }) =>
     set(state => {
       if (!isConnected || !address) {
@@ -58,6 +63,7 @@ const useSessionWizardStore = create<SessionWizardState>(set => ({
       policyPreview,
       error: null,
       redirectUrl: null,
+      provisionedSigner: null,
     }),
   backToPolicySelection: () =>
     set({
@@ -65,11 +71,14 @@ const useSessionWizardStore = create<SessionWizardState>(set => ({
       policyPreview: null,
       error: null,
       redirectUrl: null,
+      provisionedSigner: null,
     }),
-  markCreationSuccess: ({ redirectUrl }) =>
+  markCreationSuccess: ({ redirectUrl, provisionedSigner }) =>
     set({
       currentStep: 'success',
       redirectUrl,
+      provisionedSigner,
+      existingSigners: provisionedSigner.existingSigners,
       error: null,
     }),
   markCreationError: error =>

@@ -19,6 +19,8 @@ export function useSessionWizardState() {
   const policyPreview = useSessionWizardStore(state => state.policyPreview);
   const error = useSessionWizardStore(state => state.error);
   const redirectUrl = useSessionWizardStore(state => state.redirectUrl);
+  const provisionedSigner = useSessionWizardStore(state => state.provisionedSigner);
+  const existingSigners = useSessionWizardStore(state => state.existingSigners);
 
   const syncConnection = useSessionWizardStore(state => state.syncConnection);
   const setDangerAcknowledged = useSessionWizardStore(state => state.setDangerAcknowledged);
@@ -42,6 +44,8 @@ export function useSessionWizardState() {
     policyPreview,
     error,
     redirectUrl,
+    provisionedSigner,
+    existingSigners,
     setDangerAcknowledged,
     setValidationError,
     proceedToCreating,

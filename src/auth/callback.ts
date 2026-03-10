@@ -1,13 +1,74 @@
 import { isAddress } from "viem";
 import { parseSessionPolicyMeta } from "../policy/meta.js";
-import type { SessionPolicyMeta } from "../session/types.js";
+import type { DelegatedCapabilitySummary, SessionPolicyMeta, SessionToolName } from "../session/types.js";
 
 const CALLBACK_PAYLOAD_QUERY_KEY = "session";
 
-export interface PrivySignerBundlePayload {
+export interface PrivySignerInitBundlePayload {
+  version: 2;
+  action: "init";
   accountAddress: string;
   chainId: number;
-  policyMeta?: SessionPolicyMeta;
+  walletId: string;
+  signerType: "device_authorization_key";
+  signerId: string;
+  policyIds: string[];
+  signerFingerprint: string;
+  signerLabel: string;
+  signerCreatedAt: number;
+  policyMeta: SessionPolicyMeta;
+  capabilitySummary: DelegatedCapabilitySummary;
+}
+
+export interface PrivySignerRevokeBundlePayload {
+  version: 2;
+  action: "revoke";
+  accountAddress: string;
+  chainId: number;
+  walletId: string;
+  signerType: "device_authorization_key";
+  signerId: string;
+  revokedAt: number;
+}
+
+export type PrivySignerBundlePayload =
+  | PrivySignerInitBundlePayload
+  | PrivySignerRevokeBundlePayload;
+
+function parseNonEmptyString(value: unknown, fieldName: string): string {
+  if (typeof value !== "string" || value.trim() === "") {
+    throw new Error(`Invalid ${fieldName}. Expected a non-empty string.`);
+  }
+  return value.trim();
+}
+
+function parseStringArray(value: unknown, fieldName: string): string[] {
+  if (!Array.isArray(value) || value.length === 0 || !value.every(entry => typeof entry === "string" && entry.trim() !== "")) {
+    throw new Error(`Invalid ${fieldName}. Expected a non-empty string array.`);
+  }
+  return value.map(entry => entry.trim());
+}
+
+function parseCapabilitySummary(value: unknown): DelegatedCapabilitySummary {
+  if (!isRecord(value)) {
+    throw new Error("Invalid capabilitySummary. Expected an object.");
+  }
+
+  const chainId = parsePositiveInt(value.chainId, "capabilitySummary.chainId");
+  const expiresAt = parsePositiveInt(value.expiresAt, "capabilitySummary.expiresAt");
+  const feeLimit = parseNonEmptyString(value.feeLimit, "capabilitySummary.feeLimit");
+  const maxValuePerUse = parseNonEmptyString(value.maxValuePerUse, "capabilitySummary.maxValuePerUse");
+  const enabledTools = parseStringArray(value.enabledTools, "capabilitySummary.enabledTools") as SessionToolName[];
+  const notes = parseStringArray(value.notes, "capabilitySummary.notes");
+
+  return {
+    chainId,
+    expiresAt,
+    feeLimit,
+    maxValuePerUse,
+    enabledTools,
+    notes,
+  };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -91,10 +152,70 @@ export function parseSignerBundleInput(input: string): PrivySignerBundlePayload 
   }
 
   const chainId = parsePositiveInt(payload.chainId, "chainId");
+  const version = parsePositiveInt(payload.version, "version");
+  if (version !== 2) {
+    throw new Error(`Unsupported signer bundle version (${version}).`);
+  }
 
-  return {
-    accountAddress: payload.accountAddress,
-    chainId,
-    policyMeta: parseSessionPolicyMeta(payload.policyMeta),
-  };
+  const action = parseNonEmptyString(payload.action, "action");
+  const walletId = parseNonEmptyString(payload.walletId, "walletId");
+  const signerType = parseNonEmptyString(payload.signerType, "signerType");
+  if (signerType !== "device_authorization_key") {
+    throw new Error(`Invalid signerType. Expected "device_authorization_key", received "${signerType}".`);
+  }
+  const signerId = parseNonEmptyString(payload.signerId, "signerId");
+
+  if (action === "init") {
+    const policyMeta = parseSessionPolicyMeta(payload.policyMeta);
+    if (!policyMeta) {
+      throw new Error("Invalid signer bundle policyMeta.");
+    }
+
+    return {
+      version: 2,
+      action: "init",
+      accountAddress: payload.accountAddress,
+      chainId,
+      walletId,
+      signerType,
+      signerId,
+      policyIds: parseStringArray(payload.policyIds, "policyIds"),
+      signerFingerprint: parseNonEmptyString(payload.signerFingerprint, "signerFingerprint"),
+      signerLabel: parseNonEmptyString(payload.signerLabel, "signerLabel"),
+      signerCreatedAt: parsePositiveInt(payload.signerCreatedAt, "signerCreatedAt"),
+      policyMeta,
+      capabilitySummary: parseCapabilitySummary(payload.capabilitySummary),
+    };
+  }
+
+  if (action === "revoke") {
+    return {
+      version: 2,
+      action: "revoke",
+      accountAddress: payload.accountAddress,
+      chainId,
+      walletId,
+      signerType,
+      signerId,
+      revokedAt: parsePositiveInt(payload.revokedAt, "revokedAt"),
+    };
+  }
+
+  throw new Error(`Invalid signer bundle action "${action}".`);
+}
+
+export function parseInitSignerBundleInput(input: string): PrivySignerInitBundlePayload {
+  const bundle = parseSignerBundleInput(input);
+  if (bundle.action !== "init") {
+    throw new Error(`Invalid signer bundle action "${bundle.action}". Expected "init".`);
+  }
+  return bundle;
+}
+
+export function parseRevokeSignerBundleInput(input: string): PrivySignerRevokeBundlePayload {
+  const bundle = parseSignerBundleInput(input);
+  if (bundle.action !== "revoke") {
+    throw new Error(`Invalid signer bundle action "${bundle.action}". Expected "revoke".`);
+  }
+  return bundle;
 }

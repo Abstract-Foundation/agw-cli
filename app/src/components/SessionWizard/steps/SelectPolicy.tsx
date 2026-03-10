@@ -18,8 +18,8 @@ const PERMISSIONS = [
     ),
   },
   {
-    label: 'Sign messages',
-    detail: 'Approve signatures and typed data',
+    label: 'Sign typed data',
+    detail: 'Approve typed-data signatures for supported flows',
     icon: (
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M9.5 3.5L12.5 6.5L6 13H3V10L9.5 3.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -46,7 +46,7 @@ const PERMISSIONS = [
   },
 ] as const;
 
-export default function SelectPolicy() {
+export default function SelectPolicy({ authPublicKey }: { authPublicKey: string }) {
   const {
     agwAddress,
     dangerAcknowledged,
@@ -56,6 +56,7 @@ export default function SelectPolicy() {
   } = useSessionWizardState();
 
   const displayAddress = agwAddress ? `${agwAddress.slice(0, 6)}...${agwAddress.slice(-4)}` : 'Wallet';
+  const deviceKeyPreview = `${authPublicKey.slice(0, 10)}...${authPublicKey.slice(-10)}`;
 
   const handleAuthorize = () => {
     if (!dangerAcknowledged) {
@@ -87,9 +88,10 @@ export default function SelectPolicy() {
         <CardContent className={styles.mainBody}>
           <p className={styles.sectionTitle}>Delegated Agent Access</p>
           <p className={styles.consentSubtitle}>
-            Your AI agent can perform these actions through delegated wallet access on this device.
-            The selected preset configures local MCP guardrails.
+            You are adding a new AGW MCP signer for this device. The remote policy is bounded to
+            this chain, expires automatically, and caps native value per request.
           </p>
+          <p className={styles.helper}>Device key: <code>{deviceKeyPreview}</code></p>
 
           <div className={styles.permissionList}>
             {PERMISSIONS.map(permission => (
@@ -111,7 +113,7 @@ export default function SelectPolicy() {
               checked={dangerAcknowledged}
               onChange={event => setDangerAcknowledged(event.target.checked)}
             />
-            <span>I acknowledge that no party other than myself controls my agent&apos;s behavior. All transactions are final and irreversible, and I assume full responsibility for any resulting loss of funds.</span>
+            <span>I understand that this approval adds a new AGW MCP signer to my wallet for this device. I can revoke it later, but any signed transactions remain final and irreversible.</span>
           </label>
         </CardContent>
         <CardFooter className={styles.mainFooter}>

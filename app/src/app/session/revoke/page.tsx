@@ -1,5 +1,5 @@
-import SessionFlowClient from '@/components/SessionFlowClient';
-import { parseOnboardingParams } from '@/lib/onboarding-params';
+import RevokeSignerFlow from '@/components/RevokeSignerFlow';
+import { parseRevokeParams } from '@/lib/onboarding-params';
 import pageStyles from '@/app/styles.module.scss';
 import styles from '@/components/SessionWizard/styles.module.scss';
 
@@ -21,18 +21,18 @@ function toSearchParams(
   return searchParams;
 }
 
-export default async function NewSessionPage({
+export default async function RevokeSessionPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const result = parseOnboardingParams(toSearchParams(await searchParams));
+  const result = parseRevokeParams(toSearchParams(await searchParams));
 
   if (!result.ok || !result.params) {
     return (
       <div className={pageStyles.container}>
         <div className={styles.wrapper}>
-          <p className={styles.error}>{result.error ?? 'Invalid onboarding parameters.'}</p>
+          <p className={styles.error}>{result.error ?? 'Invalid revoke parameters.'}</p>
           <p className={styles.helper}>Use the agw-mcp CLI to start this flow.</p>
         </div>
       </div>
@@ -41,10 +41,13 @@ export default async function NewSessionPage({
 
   return (
     <div className={pageStyles.container}>
-      <SessionFlowClient
+      <RevokeSignerFlow
         callbackUrl={result.params.callbackUrl}
         chainId={result.params.chainId}
-        authPublicKey={result.params.authPublicKey}
+        walletId={result.params.walletId}
+        signerId={result.params.signerId}
+        signerLabel={result.params.signerLabel}
+        signerFingerprint={result.params.signerFingerprint}
       />
     </div>
   );

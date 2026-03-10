@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from 'react';
 import type { Chain } from 'viem/chains';
-import { useHeadlessDelegatedActions } from '@privy-io/react-auth';
 import Button from '@/@abstract-ui/components/Button';
 import {
   Card,
@@ -20,9 +19,11 @@ import styles from '../styles.module.scss';
 export default function Creating({
   callbackUrl,
   chain,
+  authPublicKey,
 }: {
   callbackUrl: string;
   chain: Chain;
+  authPublicKey: string;
 }) {
   const hasStartedRef = useRef(false);
   const {
@@ -32,7 +33,6 @@ export default function Creating({
     markCreationSuccess,
   } = useSessionWizardState();
   const { createAgentSigner, isPending } = useCreateAgentSigner();
-  const { delegateWallet } = useHeadlessDelegatedActions();
 
   useEffect(() => {
     if (hasStartedRef.current) {
@@ -51,15 +51,15 @@ export default function Creating({
         }
         const accountAddress = agwAddress as `0x${string}`;
 
-        const bundle = await createAgentSigner({
+        const { bundle, provisionedSigner } = await createAgentSigner({
           accountAddress,
           chainId: chain.id,
+          authPublicKey,
           policyPayload: policyPreview.policyPayload,
-          delegateWallet,
         });
 
         const redirectUrl = buildRedirectUrl(callbackUrl, bundle);
-        markCreationSuccess({ redirectUrl });
+        markCreationSuccess({ redirectUrl, provisionedSigner });
       } catch (error) {
         markCreationError(error instanceof Error ? error.message : String(error));
       }
@@ -70,7 +70,7 @@ export default function Creating({
     agwAddress,
     policyPreview,
     createAgentSigner,
-    delegateWallet,
+    authPublicKey,
     callbackUrl,
     chain.id,
     markCreationError,
@@ -82,13 +82,13 @@ export default function Creating({
       <Card>
         <CardHeader>
           <CardTitle>Setting Up Agent Access</CardTitle>
-          <CardDescription>Requesting delegated wallet access for this device.</CardDescription>
+          <CardDescription>Provisioning a new AGW MCP signer for this device.</CardDescription>
         </CardHeader>
         <CardContent>
           <p className={styles.helper}>
             {isPending
-              ? 'Waiting for Privy delegation approval...'
-              : 'Preparing delegated access request...'}
+              ? 'Creating signer policy and attaching it to your wallet...'
+              : 'Preparing signer attachment request...'}
           </p>
         </CardContent>
         <CardFooter className={styles.footer}>

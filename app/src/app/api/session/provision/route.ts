@@ -1,0 +1,80 @@
+import { NextResponse } from 'next/server';
+import { buildDefaultPolicyRequest } from '@/lib/server/default-policy';
+import {
+  buildSignerLabel,
+  computeSignerFingerprint,
+  createKeyQuorum,
+  createPolicy,
+  findWalletByAddress,
+  listExistingAgwMcpSigners,
+} from '@/lib/server/privy-api';
+import type { ProvisionedSignerResult } from '@/lib/session-config';
+
+interface ProvisionRequestBody {
+  accountAddress?: string;
+  chainId?: number;
+  authPublicKey?: string;
+}
+
+const ADDRESS_PATTERN = /^0x[a-fA-F0-9]{40}$/;
+const BASE64_PATTERN = /^[A-Za-z0-9+/=]+$/;
+
+export async function POST(request: Request) {
+  try {
+    const body = (await request.json()) as ProvisionRequestBody;
+
+    if (!body.accountAddress || !ADDRESS_PATTERN.test(body.accountAddress)) {
+      return NextResponse.json({ error: 'Invalid accountAddress.' }, { status: 400 });
+    }
+    if (!Number.isInteger(body.chainId) || body.chainId! <= 0) {
+      return NextResponse.json({ error: 'Invalid chainId.' }, { status: 400 });
+    }
+    if (!body.authPublicKey || !BASE64_PATTERN.test(body.authPublicKey)) {
+      return NextResponse.json({ error: 'Invalid authPublicKey.' }, { status: 400 });
+    }
+
+    const chainId = body.chainId as number;
+    const wallet = await findWalletByAddress(body.accountAddress);
+    const existingSigners = await listExistingAgwMcpSigners(wallet);
+    const signerFingerprint = computeSignerFingerprint(body.authPublicKey);
+    const signerLabel = buildSignerLabel(signerFingerprint);
+    const signer = await createKeyQuorum({
+      publicKey: body.authPublicKey,
+      displayName: signerLabel,
+    });
+
+    const defaultPolicy = buildDefaultPolicyRequest({
+      chainId,
+      signerLabel,
+      signerFingerprint,
+    });
+    const policy = await createPolicy({
+      version: defaultPolicy.version,
+      name: defaultPolicy.name,
+      chain_type: defaultPolicy.chain_type,
+      rules: defaultPolicy.rules,
+    });
+
+    const result: ProvisionedSignerResult = {
+      walletId: wallet.id,
+      signerType: 'device_authorization_key',
+      signerId: signer.id,
+      policyIds: [policy.id],
+      signerFingerprint,
+      signerLabel,
+      signerCreatedAt: signer.createdAt,
+      policyMeta: defaultPolicy.policyMeta,
+      capabilitySummary: defaultPolicy.capabilitySummary,
+      existingSigners,
+    };
+
+    return NextResponse.json(result);
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 },
+    );
+  }
+}

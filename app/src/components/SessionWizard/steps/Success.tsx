@@ -13,7 +13,7 @@ import { useSessionWizardState } from '@/hooks/useSessionWizardState';
 import styles from '../styles.module.scss';
 
 export default function Success() {
-  const { redirectUrl } = useSessionWizardState();
+  const { redirectUrl, provisionedSigner, existingSigners } = useSessionWizardState();
 
   return (
     <div className={styles.wrapper}>
@@ -26,6 +26,17 @@ export default function Success() {
           {redirectUrl ? (
             <p className={styles.helper}>
               Open the link below to hand off your new agent signer to the CLI.
+            </p>
+          ) : null}
+          {provisionedSigner ? (
+            <p className={styles.helper}>
+              Signer <code>{provisionedSigner.signerLabel}</code> with fingerprint{' '}
+              <code>{provisionedSigner.signerFingerprint}</code> is now attached to your wallet.
+            </p>
+          ) : null}
+          {existingSigners.length > 0 ? (
+            <p className={styles.helper}>
+              Existing AGW MCP signers on this wallet: {existingSigners.length}.
             </p>
           ) : null}
           {redirectUrl ? (

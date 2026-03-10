@@ -6,7 +6,6 @@ import { runBootstrapFlow } from "./auth/bootstrap.js";
 import { buildMcpConfigSnippet } from "./config/mcp-config.js";
 import { resolveNetworkConfig } from "./config/index.js";
 import { AgwMcpServer } from "./server/mcp-server.js";
-import { SessionManager } from "./session/manager.js";
 import { Logger } from "./utils/logger.js";
 
 const logger = new Logger("agw-mcp");
@@ -42,18 +41,12 @@ program
     });
 
     logger.info(`Using network ${networkConfig.chain.name} (${networkConfig.chainId}) with RPC ${networkConfig.rpcUrl}`);
-    const session = await runBootstrapFlow(logger, {
+    await runBootstrapFlow(logger, {
       chainId: networkConfig.chainId,
       rpcUrl: networkConfig.rpcUrl,
       appUrl: options.appUrl,
       storageDir: options.storageDir,
     });
-    const manager = new SessionManager(logger, {
-      chainId: networkConfig.chainId,
-      rpcUrl: networkConfig.rpcUrl,
-      storageDir: options.storageDir,
-    });
-    manager.setSession(session);
     logger.info("Session saved. You can now run `agw-mcp serve`.");
   });
 

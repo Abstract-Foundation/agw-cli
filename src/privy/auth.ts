@@ -1,4 +1,4 @@
-import { createSign, generateKeyPairSync, type KeyObject, createPrivateKey } from "node:crypto";
+import { createHash, createPrivateKey, createSign, generateKeyPairSync, type KeyObject } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -35,6 +35,12 @@ export function publicKeyToBase64(publicKeyDer: Buffer): string {
   return publicKeyDer.toString("base64");
 }
 
+export function computePublicKeyFingerprint(publicKey: Buffer | string): string {
+  const keyBuffer = typeof publicKey === "string" ? Buffer.from(publicKey, "base64") : publicKey;
+  const digest = createHash("sha256").update(keyBuffer).digest("hex");
+  return `${digest.slice(0, 12)}:${digest.slice(-12)}`;
+}
+
 function ensurePrivateDir(dir: string): void {
   fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
   try {
@@ -47,14 +53,17 @@ function ensurePrivateDir(dir: string): void {
 export function writeAuthKeyfile(privateKeyDer: Buffer, storageDir: string): string {
   ensurePrivateDir(storageDir);
   const filePath = path.join(storageDir, AUTH_KEY_FILENAME);
-  const encoded = WALLET_AUTH_PREFIX + privateKeyDer.toString("base64");
-  fs.writeFileSync(filePath, `${encoded}\n`, { mode: 0o600 });
+  fs.writeFileSync(filePath, formatAuthKeyfile(privateKeyDer), { mode: 0o600 });
   try {
     fs.chmodSync(filePath, 0o600);
   } catch {
     // Ignore chmod errors on non-posix platforms.
   }
   return filePath;
+}
+
+export function formatAuthKeyfile(privateKeyDer: Buffer): string {
+  return `${WALLET_AUTH_PREFIX}${privateKeyDer.toString("base64")}\n`;
 }
 
 export function readAuthKeyfile(keyfilePath: string): KeyObject {

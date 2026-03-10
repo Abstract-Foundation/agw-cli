@@ -1,10 +1,10 @@
+import { runRemoteRevokeFlow } from "../auth/revoke.js";
 import type { ToolHandler } from "./types.js";
 
 export const revokeSessionTool: ToolHandler = {
   name: "revoke_session",
   description:
-    "Marks the local AGW session as revoked and deletes the authorization key. " +
-    "To fully revoke the signer on-chain, use the companion app.",
+    "Opens the hosted revoke flow, verifies the AGW MCP signer was removed from your wallet, then deletes the local authorization key.",
   inputSchema: {
     type: "object",
     properties: {},
@@ -19,6 +19,13 @@ export const revokeSessionTool: ToolHandler = {
     if (!session) {
       throw new Error("session is missing");
     }
+    if (!session.privySignerBinding || !session.privyWalletId) {
+      throw new Error("session does not have a remotely provisioned signer to revoke");
+    }
+
+    await runRemoteRevokeFlow(context.logger, session, {
+      appUrl: process.env.AGW_MCP_APP_URL,
+    });
 
     context.sessionManager.markSessionRevoked();
 
@@ -27,7 +34,10 @@ export const revokeSessionTool: ToolHandler = {
       accountAddress: session.accountAddress,
       chainId: session.chainId,
       localStatus: context.sessionManager.getSessionStatus(),
-      note: "Local session revoked. Use the companion app to remove the signer from your wallet.",
+      walletId: session.privyWalletId,
+      signerId: session.privySignerBinding.id,
+      signerLabel: session.privySignerBinding.label,
+      note: "Signer removed from the wallet and local authorization key deleted.",
     };
   },
 };

@@ -1,8 +1,10 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import type { PrivySignerInitBundlePayload } from "../src/auth/callback.js";
+import { computePublicKeyFingerprint } from "../src/privy/auth.js";
 import type { Logger } from "../src/utils/logger.js";
-import { parseSignerBundleInput } from "../src/auth/callback.js";
+import { parseInitSignerBundleInput } from "../src/auth/callback.js";
 import { materializeSessionFromBundle } from "../src/auth/provision.js";
 
 jest.mock("open", () => ({
@@ -15,17 +17,29 @@ jest.mock("../src/auth/handoff.js", () => ({
 }));
 
 jest.mock("../src/privy/admin.js", () => ({
-  findWalletByAddress: jest.fn(async () => "wallet_test123"),
+  getWalletById: jest.fn(async () => ({
+    id: "wallet_test123",
+    address: "0x1111111111111111111111111111111111111111",
+    chainType: "ethereum",
+    additionalSigners: [{ signerId: "quorum_test789", policyIds: ["policy_test456"] }],
+  })),
+  getKeyQuorumById: jest.fn(async () => ({
+    id: "quorum_test789",
+    displayName: "AGW MCP aa11bb22cc33:dd44ee55ff66",
+    createdAt: 1_800_000_000,
+    publicKeys: [],
+  })),
 }));
 
 import open from "open";
 import { runBootstrapFlow } from "../src/auth/bootstrap.js";
 import { startCallbackServer } from "../src/auth/handoff.js";
-import { findWalletByAddress } from "../src/privy/admin.js";
+import { getKeyQuorumById, getWalletById } from "../src/privy/admin.js";
 
 const openMock = open as unknown as jest.Mock;
 const startServerMock = startCallbackServer as unknown as jest.Mock;
-const findWalletByAddressMock = findWalletByAddress as unknown as jest.Mock;
+const getWalletByIdMock = getWalletById as unknown as jest.Mock;
+const getKeyQuorumByIdMock = getKeyQuorumById as unknown as jest.Mock;
 const ORIGINAL_APP_URL = process.env.AGW_MCP_APP_URL;
 const ORIGINAL_PRIVY_APP_ID = process.env.PRIVY_APP_ID;
 const ORIGINAL_PRIVY_APP_SECRET = process.env.PRIVY_APP_SECRET;
@@ -44,12 +58,41 @@ function encodePayload(payload: unknown): string {
   return Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
 }
 
-function buildPrivyPayload(overrides: Record<string, unknown> = {}) {
+function buildPrivyPayload(overrides: Partial<PrivySignerInitBundlePayload> = {}): PrivySignerInitBundlePayload {
   return {
+    version: 2,
+    action: "init",
     accountAddress: "0x1111111111111111111111111111111111111111",
     chainId: 11124,
+    walletId: "wallet_test123",
+    signerType: "device_authorization_key",
+    signerId: "quorum_test789",
+    policyIds: ["policy_test456"],
+    signerFingerprint: "aa11bb22cc33:dd44ee55ff66",
+    signerLabel: "AGW MCP aa11bb22cc33:dd44ee55ff66",
+    signerCreatedAt: 1_800_000_000,
+    capabilitySummary: {
+      chainId: 11124,
+      expiresAt: 1_800_003_600,
+      feeLimit: "2000000000000000",
+      maxValuePerUse: "10000000000000000",
+      enabledTools: ["get_session_status", "revoke_session"],
+      notes: ["Transactions and typed-data signatures are enabled."],
+    },
+    policyMeta: {
+      version: 1,
+      mode: "guided",
+      presetId: "full_app_control",
+      presetLabel: "AGW MCP Default",
+      enabledTools: ["get_session_status", "revoke_session"],
+      selectedAppIds: [],
+      selectedContractAddresses: [],
+      unverifiedAppIds: [],
+      warnings: [],
+      generatedAt: 1_800_000_000,
+    },
     ...overrides,
-  };
+  } as PrivySignerInitBundlePayload;
 }
 
 describe("bootstrap callback/signer bundle flow", () => {
@@ -82,7 +125,7 @@ describe("bootstrap callback/signer bundle flow", () => {
 
   it("parses callback URL payloads into a validated signer bundle", () => {
     // #given
-    const policyMeta = {
+    const policyMeta: PrivySignerInitBundlePayload["policyMeta"] = {
       version: 1,
       mode: "guided",
       presetId: "payments",
@@ -98,11 +141,13 @@ describe("bootstrap callback/signer bundle flow", () => {
 
     // #when
     const encoded = encodePayload(payload);
-    const parsed = parseSignerBundleInput(`http://127.0.0.1:8787/callback?session=${encoded}`);
+    const parsed = parseInitSignerBundleInput(`http://127.0.0.1:8787/callback?session=${encoded}`);
 
     // #then
     expect(parsed.accountAddress).toBe("0x1111111111111111111111111111111111111111");
     expect(parsed.chainId).toBe(11124);
+    expect(parsed.walletId).toBe("wallet_test123");
+    expect(parsed.signerId).toBe("quorum_test789");
     expect(parsed.policyMeta).toEqual(policyMeta);
   });
 
@@ -133,8 +178,6 @@ describe("bootstrap callback/signer bundle flow", () => {
         }),
         {
           chainId: 11124,
-          walletId: "wallet_test123",
-          storageDir: tmpDir,
           authKeyfilePath,
           nowUnixSeconds: now,
         },
@@ -145,6 +188,7 @@ describe("bootstrap callback/signer bundle flow", () => {
       expect(session.privyAuthKeyRef!.kind).toBe("keyfile");
       expect(session.privyAuthKeyRef!.value).toBe(authKeyfilePath);
       expect(session.privyWalletId).toBe("wallet_test123");
+      expect(session.privySignerBinding?.id).toBe("quorum_test789");
       expect(session.policyMeta?.presetId).toBe("payments");
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -168,6 +212,9 @@ describe("bootstrap callback/signer bundle flow", () => {
 
     openMock.mockImplementation(async (url: string) => {
       const launchUrl = new URL(url);
+      const authPublicKey = launchUrl.searchParams.get("auth_pubkey")!;
+      const signerFingerprint = computePublicKeyFingerprint(authPublicKey);
+      const signerLabel = `AGW MCP ${signerFingerprint}`;
       expect(`${launchUrl.origin}${launchUrl.pathname}`).toBe("https://onboarding.example/session/new");
       const callbackUrlParam = launchUrl.searchParams.get("callback_url");
       expect(callbackUrlParam).toBeTruthy();
@@ -175,12 +222,26 @@ describe("bootstrap callback/signer bundle flow", () => {
       expect(`${callbackUrl.origin}${callbackUrl.pathname}`).toBe("http://127.0.0.1:4567/callback/abc123");
       expect(callbackUrl.searchParams.get("state")).toMatch(/^[0-9a-f]{32}$/);
       expect(launchUrl.searchParams.get("chain_id")).toBe("11124");
-      expect(launchUrl.searchParams.get("auth_pubkey")).toBeNull();
+      expect(launchUrl.searchParams.get("auth_pubkey")).toMatch(/^[A-Za-z0-9+/=]+$/);
+      expect(launchUrl.searchParams.get("action")).toBe("init");
 
       const keyfilePath = path.join(tmpDir, "privy-auth.key");
-      expect(fs.existsSync(keyfilePath)).toBe(true);
+      expect(fs.existsSync(keyfilePath)).toBe(false);
+      getKeyQuorumByIdMock.mockResolvedValueOnce({
+        id: "quorum_test789",
+        displayName: signerLabel,
+        createdAt: 1_800_000_000,
+        publicKeys: [authPublicKey],
+      });
 
-      resolvePayload(encodePayload(buildPrivyPayload()));
+      resolvePayload(
+        encodePayload(
+          buildPrivyPayload({
+            signerFingerprint,
+            signerLabel,
+          }),
+        ),
+      );
     });
 
     // #when
@@ -201,11 +262,13 @@ describe("bootstrap callback/signer bundle flow", () => {
       expect(session.privyAuthKeyRef!.value).toBe(path.join(tmpDir, "privy-auth.key"));
       expect(session.chainId).toBe(11124);
       expect(session.privyWalletId).toBe("wallet_test123");
-      expect(findWalletByAddressMock).toHaveBeenCalledWith(
+      expect(session.privySignerBinding?.id).toBe("quorum_test789");
+      expect(getWalletByIdMock).toHaveBeenCalledWith(
         { appId: "test-app-id", appSecret: "test-app-secret" },
-        "0x1111111111111111111111111111111111111111",
+        "wallet_test123",
       );
       expect(fs.existsSync(path.join(tmpDir, ".bootstrap-init.lock"))).toBe(false);
+      expect(fs.existsSync(path.join(tmpDir, "privy-auth.key"))).toBe(true);
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
@@ -232,9 +295,25 @@ describe("bootstrap callback/signer bundle flow", () => {
       openMock.mockImplementation(async (url: string) => {
         const launchUrl = new URL(url);
         expect(`${launchUrl.origin}${launchUrl.pathname}`).toBe("https://mcp.abs.xyz/session/new");
-        expect(launchUrl.searchParams.get("auth_pubkey")).toBeNull();
+        const authPublicKey = launchUrl.searchParams.get("auth_pubkey")!;
+        const signerFingerprint = computePublicKeyFingerprint(authPublicKey);
+        const signerLabel = `AGW MCP ${signerFingerprint}`;
+        expect(authPublicKey).toMatch(/^[A-Za-z0-9+/=]+$/);
+        getKeyQuorumByIdMock.mockResolvedValueOnce({
+          id: "quorum_test789",
+          displayName: signerLabel,
+          createdAt: 1_800_000_000,
+          publicKeys: [authPublicKey],
+        });
 
-        resolvePayload(encodePayload(buildPrivyPayload()));
+        resolvePayload(
+          encodePayload(
+            buildPrivyPayload({
+              signerFingerprint,
+              signerLabel,
+            }),
+          ),
+        );
       });
 
       // #when
@@ -312,8 +391,25 @@ describe("bootstrap callback/signer bundle flow", () => {
       close: async () => undefined,
     });
 
-    openMock.mockImplementation(async () => {
-      resolvePayload(encodePayload(buildPrivyPayload()));
+    openMock.mockImplementation(async (url: string) => {
+      const launchUrl = new URL(url);
+      const authPublicKey = launchUrl.searchParams.get("auth_pubkey")!;
+      const signerFingerprint = computePublicKeyFingerprint(authPublicKey);
+      const signerLabel = `AGW MCP ${signerFingerprint}`;
+      getKeyQuorumByIdMock.mockResolvedValueOnce({
+        id: "quorum_test789",
+        displayName: signerLabel,
+        createdAt: 1_800_000_000,
+        publicKeys: [authPublicKey],
+      });
+      resolvePayload(
+        encodePayload(
+          buildPrivyPayload({
+            signerFingerprint,
+            signerLabel,
+          }),
+        ),
+      );
     });
 
     // #then
@@ -333,20 +429,31 @@ describe("bootstrap callback/signer bundle flow", () => {
   it("rejects malformed payload with invalid account address", () => {
     const payload = buildPrivyPayload({ accountAddress: "not-an-address" });
 
-    expect(() => parseSignerBundleInput(encodePayload(payload))).toThrow("Invalid signer bundle accountAddress.");
+    expect(() => parseInitSignerBundleInput(encodePayload(payload))).toThrow("Invalid signer bundle accountAddress.");
   });
 
   it("rejects malformed payload with missing account address", () => {
     const payload = buildPrivyPayload({ accountAddress: "" });
 
-    expect(() => parseSignerBundleInput(encodePayload(payload))).toThrow("Invalid signer bundle accountAddress.");
+    expect(() => parseInitSignerBundleInput(encodePayload(payload))).toThrow("Invalid signer bundle accountAddress.");
   });
 
   it("rejects malformed payload when chain id is missing", () => {
     const payload = buildPrivyPayload();
     delete (payload as { chainId?: number }).chainId;
 
-    expect(() => parseSignerBundleInput(encodePayload(payload))).toThrow("Invalid chainId");
+    expect(() => parseInitSignerBundleInput(encodePayload(payload))).toThrow("Invalid chainId");
+  });
+
+  it("rejects legacy payloads without versioned signer metadata", () => {
+    expect(() =>
+      parseInitSignerBundleInput(
+        encodePayload({
+          accountAddress: "0x1111111111111111111111111111111111111111",
+          chainId: 11124,
+        }),
+      ),
+    ).toThrow("Invalid version");
   });
 
   it("rejects bundle when returned chain id mismatches requested chain", async () => {
@@ -364,7 +471,14 @@ describe("bootstrap callback/signer bundle flow", () => {
       close: async () => undefined,
     });
 
-    openMock.mockImplementation(async () => {
+    openMock.mockImplementation(async (url: string) => {
+      const launchUrl = new URL(url);
+      getKeyQuorumByIdMock.mockResolvedValueOnce({
+        id: "quorum_test789",
+        displayName: "AGW MCP aa11bb22cc33:dd44ee55ff66",
+        createdAt: 1_800_000_000,
+        publicKeys: [launchUrl.searchParams.get("auth_pubkey")],
+      });
       resolvePayload(encodePayload(buildPrivyPayload({ chainId: 2741 })));
     });
 
@@ -416,7 +530,14 @@ describe("bootstrap callback/signer bundle flow", () => {
       close: async () => undefined,
     });
 
-    openMock.mockImplementation(async () => {
+    openMock.mockImplementation(async (url: string) => {
+      const launchUrl = new URL(url);
+      getKeyQuorumByIdMock.mockResolvedValueOnce({
+        id: "quorum_test789",
+        displayName: "AGW MCP aa11bb22cc33:dd44ee55ff66",
+        createdAt: 1_800_000_000,
+        publicKeys: [launchUrl.searchParams.get("auth_pubkey")],
+      });
       resolvePayload(encodePayload(buildPrivyPayload({ chainId: 2741 })));
     });
 
