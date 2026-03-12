@@ -23,9 +23,9 @@ import { startCallbackServer } from "../packages/agw-core/src/auth/handoff.js";
 
 const openMock = open as unknown as jest.Mock;
 const startServerMock = startCallbackServer as unknown as jest.Mock;
-const ORIGINAL_APP_URL = process.env.AGW_MCP_APP_URL;
-const ORIGINAL_CALLBACK_SIGNING_PUBLIC_KEY = process.env.AGW_MCP_CALLBACK_SIGNING_PUBLIC_KEY;
-const ORIGINAL_CALLBACK_SIGNING_ISSUER = process.env.AGW_MCP_CALLBACK_SIGNING_ISSUER;
+const ORIGINAL_APP_URL = process.env.AGW_APP_URL;
+const ORIGINAL_CALLBACK_SIGNING_PUBLIC_KEY = process.env.AGW_CALLBACK_SIGNING_PUBLIC_KEY;
+const ORIGINAL_CALLBACK_SIGNING_ISSUER = process.env.AGW_CALLBACK_SIGNING_ISSUER;
 const CALLBACK_ISSUER = "test-agw-mcp";
 const { privateKey: callbackSigningPrivateKey, publicKey: callbackSigningPublicKey } = generateKeyPairSync("ed25519");
 
@@ -100,30 +100,30 @@ function buildPrivyPayload(overrides: Partial<PrivySignerInitBundlePayload> = {}
 describe("bootstrap callback/signer bundle flow", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env.AGW_MCP_APP_URL = "https://onboarding.example";
-    process.env.AGW_MCP_CALLBACK_SIGNING_PUBLIC_KEY = callbackSigningPublicKey
+    process.env.AGW_APP_URL = "https://onboarding.example";
+    process.env.AGW_CALLBACK_SIGNING_PUBLIC_KEY = callbackSigningPublicKey
       .export({ format: "der", type: "spki" })
       .toString("base64");
-    process.env.AGW_MCP_CALLBACK_SIGNING_ISSUER = CALLBACK_ISSUER;
+    process.env.AGW_CALLBACK_SIGNING_ISSUER = CALLBACK_ISSUER;
   });
 
   afterAll(() => {
     if (ORIGINAL_APP_URL === undefined) {
-      delete process.env.AGW_MCP_APP_URL;
+      delete process.env.AGW_APP_URL;
     } else {
-      process.env.AGW_MCP_APP_URL = ORIGINAL_APP_URL;
+      process.env.AGW_APP_URL = ORIGINAL_APP_URL;
     }
 
     if (ORIGINAL_CALLBACK_SIGNING_PUBLIC_KEY === undefined) {
-      delete process.env.AGW_MCP_CALLBACK_SIGNING_PUBLIC_KEY;
+      delete process.env.AGW_CALLBACK_SIGNING_PUBLIC_KEY;
     } else {
-      process.env.AGW_MCP_CALLBACK_SIGNING_PUBLIC_KEY = ORIGINAL_CALLBACK_SIGNING_PUBLIC_KEY;
+      process.env.AGW_CALLBACK_SIGNING_PUBLIC_KEY = ORIGINAL_CALLBACK_SIGNING_PUBLIC_KEY;
     }
 
     if (ORIGINAL_CALLBACK_SIGNING_ISSUER === undefined) {
-      delete process.env.AGW_MCP_CALLBACK_SIGNING_ISSUER;
+      delete process.env.AGW_CALLBACK_SIGNING_ISSUER;
     } else {
-      process.env.AGW_MCP_CALLBACK_SIGNING_ISSUER = ORIGINAL_CALLBACK_SIGNING_ISSUER;
+      process.env.AGW_CALLBACK_SIGNING_ISSUER = ORIGINAL_CALLBACK_SIGNING_ISSUER;
     }
   });
 
@@ -248,7 +248,7 @@ describe("bootstrap callback/signer bundle flow", () => {
     try {
       const session = await runBootstrapFlow(createLogger(), {
         chainId: 11124,
-        storageDir: tmpDir,
+        homeDir: tmpDir,
       });
 
       // #then
@@ -273,8 +273,8 @@ describe("bootstrap callback/signer bundle flow", () => {
   it("defaults to mcp.abs.xyz when onboarding app URL is not configured", async () => {
     // #given
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agw-mcp-bootstrap-flow-"));
-    const previous = process.env.AGW_MCP_APP_URL;
-    delete process.env.AGW_MCP_APP_URL;
+    const previous = process.env.AGW_APP_URL;
+    delete process.env.AGW_APP_URL;
 
     try {
       let resolvePayload!: (value: string) => void;
@@ -311,16 +311,16 @@ describe("bootstrap callback/signer bundle flow", () => {
       // #when
       const session = await runBootstrapFlow(createLogger(), {
         chainId: 11124,
-        storageDir: tmpDir,
+        homeDir: tmpDir,
       });
 
       // #then
       expect(session.chainId).toBe(11124);
     } finally {
       if (previous === undefined) {
-        delete process.env.AGW_MCP_APP_URL;
+        delete process.env.AGW_APP_URL;
       } else {
-        process.env.AGW_MCP_APP_URL = previous;
+        process.env.AGW_APP_URL = previous;
       }
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
@@ -333,7 +333,7 @@ describe("bootstrap callback/signer bundle flow", () => {
       await expect(
         runBootstrapFlow(createLogger(), {
           chainId: 11124,
-          storageDir: tmpDir,
+          homeDir: tmpDir,
           appUrl: "http://mcp.abs.xyz",
         }),
       ).rejects.toThrow("Refusing insecure app URL over http for non-loopback host");
@@ -353,7 +353,7 @@ describe("bootstrap callback/signer bundle flow", () => {
       await expect(
         runBootstrapFlow(createLogger(), {
           chainId: 11124,
-          storageDir: tmpDir,
+          homeDir: tmpDir,
         }),
       ).rejects.toThrow("already in progress");
       expect(startServerMock).not.toHaveBeenCalled();
@@ -405,7 +405,7 @@ describe("bootstrap callback/signer bundle flow", () => {
       await expect(
         runBootstrapFlow(createLogger(), {
           chainId: 11124,
-          storageDir: tmpDir,
+          homeDir: tmpDir,
         }),
       ).resolves.toBeDefined();
       expect(fs.existsSync(lockPath)).toBe(false);
@@ -470,7 +470,7 @@ describe("bootstrap callback/signer bundle flow", () => {
       await expect(
         runBootstrapFlow(createLogger(), {
           chainId: 11124,
-          storageDir: tmpDir,
+          homeDir: tmpDir,
         }),
       ).rejects.toThrow("does not match requested chain id");
     } finally {
@@ -524,7 +524,7 @@ describe("bootstrap callback/signer bundle flow", () => {
       await expect(
         runBootstrapFlow(createLogger(), {
           chainId: 11124,
-          storageDir: tmpDir,
+          homeDir: tmpDir,
         }),
       ).rejects.toThrow("does not match requested chain id");
 

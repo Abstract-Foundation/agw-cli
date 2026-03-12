@@ -17,4 +17,24 @@ describe("config helper command", () => {
       },
     });
   });
+
+  it("builds a strict-sanitize default snippet for the published package", () => {
+    const snippet = buildMcpConfigSnippet({
+      npx: true,
+      serverName: "agw",
+      chainId: "2741",
+    });
+
+    expect(snippet).toEqual({
+      mcpServers: {
+        agw: {
+          command: "npx",
+          args: ["-y", "@abstract-foundation/agw", "mcp", "serve", "--sanitize", "strict", "--chain-id", "2741"],
+          env: {
+            AGW_SANITIZE_PROFILE: "strict",
+          },
+        },
+      },
+    });
+  });
 });

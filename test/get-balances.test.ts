@@ -31,6 +31,7 @@ function buildContext(overrides: Partial<ToolContext["sessionManager"]>): ToolCo
       ...overrides,
     } as unknown as ToolContext["sessionManager"],
     logger: new Logger("test"),
+    runtime: {},
   };
 }
 
@@ -144,7 +145,7 @@ describe("get_balances tool", () => {
 
     try {
       const manager = new SessionManager(logger, {
-        storageDir: tmpDir,
+        homeDir: tmpDir,
         chainId: 11124,
       });
 
@@ -175,6 +176,7 @@ describe("get_balances tool", () => {
         {
           sessionManager: manager,
           logger,
+          runtime: {},
         },
       )) as Record<string, unknown>;
 

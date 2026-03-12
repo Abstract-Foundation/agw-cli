@@ -20,6 +20,7 @@ function buildContext(sessionAddress?: string): ToolContext {
       getNetworkConfig: () => ({ chainId: 2741, chain: {} as never, rpcUrl: "https://api.mainnet.abs.xyz" }),
     } as unknown as ToolContext["sessionManager"],
     logger: new Logger("test"),
+    runtime: {},
   };
 }
 

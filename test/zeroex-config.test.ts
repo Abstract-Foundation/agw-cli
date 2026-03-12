@@ -6,31 +6,29 @@ describe("0x config resolution", () => {
     expect(config.apiKey).toBeUndefined();
   });
 
-  it("resolves api key from AGW_MCP_ZEROEX_API_KEY", () => {
+  it("resolves api key from AGW_ZEROEX_API_KEY", () => {
     const config = resolveZeroExConfig({
       env: {
-        AGW_MCP_ZEROEX_API_KEY: "mcp-key",
+        AGW_ZEROEX_API_KEY: "mcp-key",
       },
     });
 
     expect(config.apiKey).toBe("mcp-key");
   });
 
-  it("falls back to ZEROEX_API_KEY when AGW_MCP_ZEROEX_API_KEY is unset", () => {
+  it("returns undefined when no AGW_ZEROEX_API_KEY is configured", () => {
     const config = resolveZeroExConfig({
-      env: {
-        ZEROEX_API_KEY: "legacy-key",
-      },
+      env: {},
     });
 
-    expect(config.apiKey).toBe("legacy-key");
+    expect(config.apiKey).toBeUndefined();
   });
 
   it("prefers explicit input apiKey over environment values", () => {
     const config = resolveZeroExConfig({
       apiKey: "cli-key",
       env: {
-        AGW_MCP_ZEROEX_API_KEY: "env-key",
+        AGW_ZEROEX_API_KEY: "env-key",
       },
     });
 
@@ -40,8 +38,7 @@ describe("0x config resolution", () => {
   it("trims whitespace and ignores empty values", () => {
     const config = resolveZeroExConfig({
       env: {
-        AGW_MCP_ZEROEX_API_KEY: "   ",
-        ZEROEX_API_KEY: "  from-env  ",
+        AGW_ZEROEX_API_KEY: "  from-env  ",
       },
     });
 
