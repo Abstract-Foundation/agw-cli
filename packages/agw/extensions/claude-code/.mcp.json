@@ -3,8 +3,10 @@
     "agw": {
       "type": "stdio",
       "command": "agw",
-      "args": ["mcp", "serve"],
-      "env": {}
+      "args": ["mcp", "serve", "--sanitize", "strict"],
+      "env": {
+        "AGW_SANITIZE_PROFILE": "strict"
+      }
     }
   }
 }

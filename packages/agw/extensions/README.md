@@ -1,22 +1,34 @@
-# AGW Extension Packaging
+# AGW Extensions
 
-This directory contains native packaging descriptors for agent platforms that can load AGW as an installed capability.
+This directory contains packaging assets for agent hosts that can load AGW as a native capability.
 
 ## Included Targets
 
-- `gemini/`: Gemini CLI extension scaffold
-- `claude-code/`: Claude Code plugin scaffold
+- `gemini/`: Gemini extension guidance
+- `claude-code/`: Claude Code MCP config scaffold
 
-Both descriptors assume the `agw` binary is installed and available on `PATH`.
+Both surfaces assume the `agw` binary is installed and available on `PATH`.
 
-## Why This Exists
+## Contract
 
-The AGW rewrite is intentionally multi-surface:
+- AGW remains JSON-first. Use `agw schema <commandId>` when the request shape is unclear.
+- Runtime config comes from `AGW_*` env vars or CLI flags, not from JSON payload fields.
+- Output precedence is `--output`, then payload `output`, then `AGW_OUTPUT`, then command defaults.
+- Mutating commands support `--dry-run` and `--execute`.
+- Pagination-aware reads support `--page-all` and NDJSON page envelopes.
+- Sanitization profiles are `off` and `strict`. Extension and MCP surfaces default to `strict`.
 
-- `agw` is the primary JSON-first CLI
-- `agw mcp serve` is the typed MCP projection
-- skills and extension descriptors package the operational guidance agents need
+## Recommended Setup
 
-That follows the agent-first model from Justin Poehnelt’s March 4, 2026 article:
+Generate a config snippet from the CLI when possible:
 
-- https://justin.poehnelt.com/posts/rewrite-your-cli-for-ai-agents/
+```bash
+agw mcp-config
+agw mcp-config --npx
+```
+
+Keep the extension host focused on the MCP surface:
+
+```bash
+agw mcp serve --sanitize strict
+```

@@ -3,9 +3,10 @@
 import { Command } from "commander";
 import {
   AgwCliError,
+  buildSchemaGetResult,
+  buildSchemaListResult,
   commandRegistry,
-  findCommandDefinition,
-  listCommands,
+  normalizeAgwError,
   toErrorEnvelope,
   type AgwCommandDefinition,
 } from "../../agw-core/src/index.js";
@@ -17,17 +18,16 @@ function writeJson(value: unknown): void {
   process.stdout.write(`${JSON.stringify(value, null, 2)}\n`);
 }
 
-function writeError(error: unknown): never {
-  const envelope = toErrorEnvelope(error);
+function writeError(error: unknown): void {
+  const normalized = normalizeAgwError(error);
+  const envelope = toErrorEnvelope(normalized);
   process.stderr.write(`${JSON.stringify(envelope, null, 2)}\n`);
 
-  if (error instanceof AgwCliError) {
-    process.exitCode = error.exitCode;
+  if (normalized instanceof AgwCliError) {
+    process.exitCode = normalized.exitCode;
   } else {
     process.exitCode = 1;
   }
-
-  throw error;
 }
 
 function registerCommands(parent: Command, definitions: AgwCommandDefinition[]): void {
@@ -47,28 +47,94 @@ function registerCommands(parent: Command, definitions: AgwCommandDefinition[]):
     if (definition.id === "mcp.serve") {
       command
         .option("--json <payload>", "Inline JSON payload or @path-to-json-file", "{}")
-        .action(async (options: { json: string }) => {
-          const input = parseJsonInput(options.json);
+        .option("--sanitize <profile>", "Sanitize MCP responses: off or strict")
+        .option("--home <dir>", "AGW home directory override")
+        .option("--chain-id <chainId>", "Chain id override for runtime configuration")
+        .option("--rpc-url <url>", "RPC URL override for runtime configuration")
+        .option("--app-url <url>", "Companion app URL override for runtime configuration")
+        .action(async (options: {
+          json: string;
+          sanitize?: "off" | "strict";
+          home?: string;
+          chainId?: string;
+          rpcUrl?: string;
+          appUrl?: string;
+        }) => {
+          const input = parseJsonInput(options.json, { cwd: process.cwd() });
           const services =
             Array.isArray(input.services) && input.services.every((entry: unknown) => typeof entry === "string")
               ? input.services
               : undefined;
-          const commandDefaults = { ...input };
-          delete commandDefaults.services;
-          await serveGeneratedMcp({ services, commandDefaults });
+          await serveGeneratedMcp({
+            services,
+            runtime: {
+              appUrl: options.appUrl,
+              chainId: options.chainId ? Number.parseInt(options.chainId, 10) : undefined,
+              homeDir: options.home,
+              rpcUrl: options.rpcUrl,
+              sanitizeProfile: options.sanitize,
+              source: "mcp",
+            },
+          });
         });
       continue;
     }
 
-    command
-      .option("--json <payload>", "Inline JSON payload or @path-to-json-file", "{}")
-      .option("--output <mode>", "Output mode override: json or ndjson")
-      .action(async (options: { json: string; output?: "json" | "ndjson" }) => {
-        const input = parseJsonInput(options.json);
-        if (options.output) {
-          input.output = options.output;
-        }
-        const { result, outputMode } = await executeCommand(definition.id, input);
+    command.option("--json <payload>", "Inline JSON payload or @path-to-json-file", "{}");
+    if (definition.cli?.supportedFlags.some(flag => flag.name === "--output")) {
+      command.option("--output <mode>", "Output mode override: json or ndjson");
+    }
+    if (definition.cli?.supportedFlags.some(flag => flag.name === "--dry-run")) {
+      command.option("--dry-run", "Validate and preview without executing mutations");
+    }
+    if (definition.cli?.supportedFlags.some(flag => flag.name === "--execute")) {
+      command.option("--execute", "Execute a mutating command");
+    }
+    if (definition.cli?.supportedFlags.some(flag => flag.name === "--sanitize")) {
+      command.option("--sanitize <profile>", "Sanitize agent-facing response content: off or strict");
+    }
+    if (definition.cli?.supportedFlags.some(flag => flag.name === "--page-all")) {
+      command.option("--page-all", "Fetch all pages for pagination-aware commands");
+    }
+    if (definition.cli?.supportedFlags.some(flag => flag.name === "--home")) {
+      command.option("--home <dir>", "AGW home directory override");
+    }
+    if (definition.cli?.supportedFlags.some(flag => flag.name === "--chain-id")) {
+      command.option("--chain-id <chainId>", "Chain id override for runtime configuration");
+    }
+    if (definition.cli?.supportedFlags.some(flag => flag.name === "--rpc-url")) {
+      command.option("--rpc-url <url>", "RPC URL override for runtime configuration");
+    }
+    if (definition.cli?.supportedFlags.some(flag => flag.name === "--app-url")) {
+      command.option("--app-url <url>", "Companion app URL override for runtime configuration");
+    }
+
+    command.action(async (options: {
+      json: string;
+      output?: "json" | "ndjson";
+      dryRun?: boolean;
+      execute?: boolean;
+      sanitize?: "off" | "strict";
+      pageAll?: boolean;
+      home?: string;
+      chainId?: string;
+      rpcUrl?: string;
+      appUrl?: string;
+    }) => {
+        const input = parseJsonInput(options.json, { cwd: process.cwd() });
+        const { result, outputMode } = await executeCommand(definition.id, input, {
+          appUrl: options.appUrl,
+          chainId: options.chainId ? Number.parseInt(options.chainId, 10) : undefined,
+          dryRun: options.dryRun,
+          execute: options.execute,
+          homeDir: options.home,
+          outputMode: options.output,
+          pageAll: options.pageAll,
+          rpcUrl: options.rpcUrl,
+          sanitizeProfile: options.sanitize,
+          source: "cli",
+          stdoutIsTTY: process.stdout.isTTY,
+        });
         process.stdout.write(formatCommandOutput(result, outputMode));
       });
   }
@@ -103,19 +169,13 @@ async function main(): Promise<void> {
     .description("Print machine-readable command metadata from the shared AGW registry.")
     .action((commandId?: string) => {
       if (!commandId) {
-        writeJson({
-          commandCount: listCommands().length,
-          commands: listCommands(),
-        });
+        writeJson(buildSchemaListResult());
         return;
       }
 
-      const definition = findCommandDefinition(commandId);
-      if (!definition) {
-        throw new AgwCliError("SCHEMA_NOT_FOUND", `Unknown command schema: ${commandId}`, 2);
-      }
-
-      writeJson(definition);
+      writeJson({
+        command: buildSchemaGetResult(commandId),
+      });
     });
 
   registerCommands(program, commandRegistry);
@@ -124,6 +184,7 @@ async function main(): Promise<void> {
     await program.parseAsync(process.argv);
   } catch (error) {
     writeError(error);
+    return;
   }
 }
 

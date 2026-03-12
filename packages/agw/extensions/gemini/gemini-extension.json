@@ -5,8 +5,11 @@
   "mcpServers": {
     "agw": {
       "command": "agw",
-      "args": ["mcp", "serve"],
-      "cwd": "${workspacePath}"
+      "args": ["mcp", "serve", "--sanitize", "strict"],
+      "cwd": "${workspacePath}",
+      "env": {
+        "AGW_SANITIZE_PROFILE": "strict"
+      }
     }
   }
 }

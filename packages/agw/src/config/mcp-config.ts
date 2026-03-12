@@ -10,28 +10,32 @@ export function buildMcpConfigSnippet(input: BuildMcpConfigSnippetInput = {}): R
   const serverName = input.serverName ?? "agw";
 
   if (input.npx) {
-    const args = ["-y", "@abstract-foundation/agw", "mcp", "serve"];
+    const args = ["-y", "@abstract-foundation/agw", "mcp", "serve", "--sanitize", "strict"];
     if (input.chainId) {
-      args.push("--json", JSON.stringify({ chainId: Number(input.chainId) }));
+      args.push("--chain-id", input.chainId);
     }
     return {
       mcpServers: {
         [serverName]: {
           command: "npx",
           args,
+          env: {
+            AGW_SANITIZE_PROFILE: "strict",
+          },
         },
       },
     };
   }
 
   const command = input.command ?? "agw";
-  const args = input.args ?? ["mcp", "serve"];
+  const args = input.args ?? ["mcp", "serve", "--sanitize", "strict"];
 
   return {
     mcpServers: {
       [serverName]: {
         command,
         args,
+        ...(input.args ? {} : { env: { AGW_SANITIZE_PROFILE: "strict" } }),
       },
     },
   };
