@@ -36,16 +36,18 @@ export default function Success() {
           ) : null}
           {existingSigners.length > 0 ? (
             <p className={styles.helper}>
-              Existing AGW MCP signers on this wallet: {existingSigners.length}.
+              Existing AGW signers on this wallet: {existingSigners.length}.
             </p>
           ) : null}
           {redirectUrl ? (
             <p className={styles.helper}>
-              If you see <code>ERR_CONNECTION_REFUSED</code>, re-run <code>agw-mcp init</code> and keep that terminal open.
+              If you see <code>ERR_CONNECTION_REFUSED</code>, re-run{' '}
+              <code>{`agw auth init --json '{"chainId":2741,"execute":true}'`}</code> and keep that terminal open.
             </p>
           ) : null}
           <p className={styles.helper}>
-            After returning to CLI, run <code>get_session_status</code> to confirm and <code>revoke_session</code> when done.
+            After returning to CLI, run <code>{`agw session status --json '{}'`}</code> to confirm and{' '}
+            <code>{`agw auth revoke --json '{"execute":true}'`}</code> when done.
           </p>
         </CardContent>
         <CardFooter className={styles.footer}>

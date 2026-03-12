@@ -1,6 +1,6 @@
 import { createPrivateKey, createPublicKey, generateKeyPairSync, sign as signPayload, verify as verifyPayload } from 'node:crypto';
 
-const DEFAULT_CALLBACK_ISSUER = 'agw-mcp';
+const DEFAULT_CALLBACK_ISSUER = 'agw';
 
 interface CallbackSigner {
   issuer: string;
