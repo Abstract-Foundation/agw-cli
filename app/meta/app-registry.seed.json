@@ -3,47 +3,6 @@
   "source": "https://backend.portal.abs.xyz/api/contract/address",
   "apps": [
     {
-      "id": "12",
-      "name": "MYRIAD",
-      "contracts": [
-        {
-          "address": "0x4f4988A910f8aE9B3214149A8eA1F2E4e3Cd93CC",
-          "name": "Prediction Market",
-          "selectors": [
-            {
-              "selector": "0x1281311d",
-              "name": "Buy"
-            },
-            {
-              "selector": "0x677bd9ff",
-              "name": "Claim Winnings"
-            },
-            {
-              "selector": "0x3620875e",
-              "name": "Sell"
-            },
-            {
-              "selector": "0xe4849b32",
-              "name": "Unknown"
-            },
-            {
-              "selector": "0x4f1ddc4f",
-              "name": "Unknown"
-            },
-            {
-              "selector": "0xec93f0f5",
-              "name": "Unknown"
-            },
-            {
-              "selector": "0xd6bbd32d",
-              "name": "Unknown"
-            }
-          ],
-          "source": "portal-api"
-        }
-      ]
-    },
-    {
       "id": "39",
       "name": "Gigaverse",
       "contracts": [

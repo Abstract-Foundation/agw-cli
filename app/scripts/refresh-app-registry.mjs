@@ -8,11 +8,6 @@ const portalApiBase = "https://backend.portal.abs.xyz/api/contract/address";
 
 const appSeeds = [
   {
-    id: "12",
-    name: "MYRIAD",
-    contracts: ["0x4f4988A910f8aE9B3214149A8eA1F2E4e3Cd93CC"],
-  },
-  {
     id: "39",
     name: "Gigaverse",
     contracts: [

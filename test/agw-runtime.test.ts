@@ -163,12 +163,8 @@ describe("agw runtime", () => {
       outputMode: "ndjson",
       result: [
         {
-          items: [{ id: "12" }],
-          nextCursor: "1",
-        },
-        {
           items: [{ id: "136" }],
-          nextCursor: "2",
+          nextCursor: "1",
         },
         {
           items: [{ id: "183" }],

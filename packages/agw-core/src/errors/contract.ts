@@ -1,5 +1,3 @@
-import { ZeroExQuoteError } from "../integrations/zeroex/quote-adapter.js";
-
 export interface McpErrorContract {
   code: string;
   message: string;
@@ -75,18 +73,6 @@ export function toMcpErrorContract(error: unknown, fallbackCode = "INTERNAL_ERRO
       message: error.message,
       details: error.details,
       raw: error.raw ?? toRaw(error),
-    };
-  }
-
-  if (error instanceof ZeroExQuoteError) {
-    return {
-      code: error.code,
-      message: error.message,
-      details: {
-        status: error.status ?? null,
-        ...(error.details ?? {}),
-      },
-      raw: toRaw(error),
     };
   }
 

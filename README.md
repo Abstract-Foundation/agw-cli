@@ -54,7 +54,6 @@ Public runtime configuration is supplied through CLI flags or `AGW_*` env vars, 
 - `AGW_OUTPUT`
 - `AGW_CALLBACK_SIGNING_PUBLIC_KEY`
 - `AGW_CALLBACK_SIGNING_ISSUER`
-- `AGW_ZEROEX_API_KEY`
 - `AGW_SANITIZE_PROFILE`
 
 JSON payloads no longer carry runtime wiring such as `storageDir`, `appUrl`, or `rpcUrl`.

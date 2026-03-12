@@ -14,24 +14,6 @@ describe("agw app catalog and shipped skills", () => {
       result: {
         items: [
           {
-            id: "12",
-            name: "MYRIAD",
-            skillRefs: [
-              {
-                id: "agw-portal-discovery",
-                title: "AGW Portal Discovery",
-                description: "Find apps, streams, and user profiles through Portal with response shaping for agent-safe reads.",
-                installPath: "skills/agw-portal-discovery",
-              },
-              {
-                id: "agw-tx-discipline",
-                title: "AGW Transaction Discipline",
-                description: "Preview-first rules for signing, sends, transfers, contract writes, and deployments.",
-                installPath: "skills/agw-tx-discipline",
-              },
-            ],
-          },
-          {
             id: "136",
             name: "Gacha",
             skillRefs: [
@@ -49,8 +31,32 @@ describe("agw app catalog and shipped skills", () => {
               },
             ],
           },
+          {
+            id: "183",
+            name: "Aborean Finance",
+            skillRefs: [
+              {
+                id: "protocol-aborean",
+                title: "Aborean Protocol",
+                description: "Compose AGW core commands for Aborean Finance workflows without baking protocol logic into the CLI core.",
+                installPath: "skills/protocol-aborean",
+              },
+              {
+                id: "agw-tx-discipline",
+                title: "AGW Transaction Discipline",
+                description: "Preview-first rules for signing, sends, transfers, contract writes, and deployments.",
+                installPath: "skills/agw-tx-discipline",
+              },
+              {
+                id: "agw-wallet-reads",
+                title: "AGW Wallet Reads",
+                description: "Use wallet and session reads with field trimming and pagination to stay within agent context budgets.",
+                installPath: "skills/agw-wallet-reads",
+              },
+            ],
+          },
         ],
-        nextCursor: "2",
+        nextCursor: null,
       },
     });
   });

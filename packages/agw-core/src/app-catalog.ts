@@ -57,17 +57,6 @@ export const skillCatalog: readonly AgwSkillRef[] = [
 
 export const appCatalog: readonly AgwAppCatalogEntry[] = [
   {
-    id: "12",
-    name: "MYRIAD",
-    categories: ["Trading"],
-    spotlight: true,
-    verified: true,
-    description: "Prediction market trading on Abstract.",
-    docsUrl: "https://help.myriad.markets/developer-docs",
-    skillRefs: ["agw-portal-discovery", "agw-tx-discipline"],
-    contracts: [{ address: "0x4f4988A910f8aE9B3214149A8eA1F2E4e3Cd93CC", label: "Prediction Market" }],
-  },
-  {
     id: "136",
     name: "Gacha",
     categories: ["Games of Chance", "Gaming"],
