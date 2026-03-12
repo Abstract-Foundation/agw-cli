@@ -1,0 +1,88 @@
+import { authSession, defineCommand, exposure, jsonOutput, writeMutation } from "./helpers.js";
+import type { AgwCommandDefinition } from "./types.js";
+
+export const contractNamespaceDefinition: AgwCommandDefinition = defineCommand({
+  id: "contract",
+  path: ["contract"],
+  kind: "namespace",
+  description: "Execute contract writes and deployment flows through AGW policies.",
+  status: "planned",
+  inputMode: "json",
+  auth: authSession("write_ready_required"),
+  mutation: writeMutation(),
+  output: jsonOutput(true, false),
+  exposure: exposure(true, true),
+  children: [
+    defineCommand({
+      id: "contract.write",
+      path: ["contract", "write"],
+      kind: "command",
+      description: "Preview or execute a contract write call.",
+      status: "implemented",
+      inputMode: "json",
+      auth: authSession("write_ready_required"),
+      requestSchema: {
+        type: "object",
+        properties: {
+          address: { type: "string" },
+          abi: { type: "array" },
+          functionName: { type: "string" },
+          args: { type: "array" },
+          value: { type: "string" },
+          execute: { type: "boolean", default: false },
+        },
+        required: ["address", "abi", "functionName"],
+      },
+      responseSchema: {
+        type: "object",
+        properties: {
+          preview: { type: "boolean" },
+          requiresExplicitExecute: { type: "boolean" },
+          action: { type: "string" },
+          txHash: { type: "string" },
+          accountAddress: { type: "string" },
+          chainId: { type: "number" },
+          explorer: { type: "object" },
+          contract: { type: "object" },
+        },
+      },
+      mutation: writeMutation(),
+      output: jsonOutput(true, false),
+      exposure: exposure(true, true),
+    }),
+    defineCommand({
+      id: "contract.deploy",
+      path: ["contract", "deploy"],
+      kind: "command",
+      description: "Preview or execute contract deployment through the AGW signer.",
+      status: "implemented",
+      inputMode: "json",
+      auth: authSession("write_ready_required"),
+      requestSchema: {
+        type: "object",
+        properties: {
+          bytecode: { type: "string" },
+          abi: { type: "array" },
+          execute: { type: "boolean", default: false },
+        },
+        required: ["abi", "bytecode"],
+      },
+      responseSchema: {
+        type: "object",
+        properties: {
+          preview: { type: "boolean" },
+          requiresExplicitExecute: { type: "boolean" },
+          execute: { type: "boolean" },
+          txHash: { type: "string" },
+          accountAddress: { type: "string" },
+          chainId: { type: "number" },
+          explorer: { type: "object" },
+          deployment: { type: "object" },
+        },
+      },
+      mutation: writeMutation(),
+      output: jsonOutput(true, false),
+      exposure: exposure(true, true),
+    }),
+  ],
+});

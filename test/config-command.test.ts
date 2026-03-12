@@ -1,18 +1,18 @@
-import { buildMcpConfigSnippet } from "../src/config/mcp-config.js";
+import { buildMcpConfigSnippet } from "../packages/agw/src/config/mcp-config.js";
 
 describe("config helper command", () => {
   it("builds a valid MCP config snippet", () => {
     const snippet = buildMcpConfigSnippet({
       command: "node",
-      args: ["/tmp/agw-mcp/dist/index.js", "serve"],
-      serverName: "agw-mcp-local",
+      args: ["/tmp/agw/dist/index.js", "mcp", "serve"],
+      serverName: "agw-local",
     });
 
     expect(snippet).toEqual({
       mcpServers: {
-        "agw-mcp-local": {
+        "agw-local": {
           command: "node",
-          args: ["/tmp/agw-mcp/dist/index.js", "serve"],
+          args: ["/tmp/agw/dist/index.js", "mcp", "serve"],
         },
       },
     });

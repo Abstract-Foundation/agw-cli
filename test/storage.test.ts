@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { generateP256KeyPair, writeAuthKeyfile } from "../src/privy/auth.js";
-import { SessionStorage } from "../src/session/storage.js";
-import type { AgwSessionData } from "../src/session/types.js";
+import { generateP256KeyPair, writeAuthKeyfile } from "../packages/agw-core/src/privy/auth.js";
+import { SessionStorage } from "../packages/agw-core/src/session/storage.js";
+import type { AgwSessionData } from "../packages/agw-core/src/session/types.js";
 
 function buildValidSession(tmpDir: string, overrides: Partial<AgwSessionData> = {}): AgwSessionData {
   const now = Math.floor(Date.now() / 1000);
@@ -161,5 +161,34 @@ describe("SessionStorage", () => {
 
     // #then
     expect(loaded?.policyMeta?.presetId).toBe("payments");
+  });
+
+  it("migrates default legacy storage from .agw-mcp into .agw", () => {
+    const homeDir = fs.mkdtempSync(path.join(os.tmpdir(), "agw-home-"));
+    const legacyDir = path.join(homeDir, ".agw-mcp");
+    const currentDir = path.join(homeDir, ".agw");
+    fs.mkdirSync(legacyDir, { recursive: true });
+
+    const homedirSpy = jest.spyOn(os, "homedir").mockReturnValue(homeDir);
+    try {
+      const keyPair = generateP256KeyPair();
+      writeAuthKeyfile(keyPair.privateKeyDer, legacyDir);
+
+      const legacyStorage = new SessionStorage(legacyDir);
+      const session = buildValidSession(legacyDir);
+      legacyStorage.save(session);
+
+      const defaultStorage = new SessionStorage();
+      const loaded = defaultStorage.load();
+
+      expect(loaded).not.toBeNull();
+      expect(defaultStorage.storageDir).toBe(currentDir);
+      expect(fs.existsSync(path.join(currentDir, "session.json"))).toBe(true);
+      expect(fs.existsSync(path.join(currentDir, "privy-auth.key"))).toBe(true);
+      expect(loaded?.privyAuthKeyRef?.value).toBe(path.join(currentDir, "privy-auth.key"));
+    } finally {
+      homedirSpy.mockRestore();
+      fs.rmSync(homeDir, { recursive: true, force: true });
+    }
   });
 });

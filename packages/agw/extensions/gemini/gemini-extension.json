@@ -1,0 +1,12 @@
+{
+  "name": "agw",
+  "version": "0.1.0",
+  "contextFileName": "GEMINI.md",
+  "mcpServers": {
+    "agw": {
+      "command": "agw",
+      "args": ["mcp", "serve"],
+      "cwd": "${workspacePath}"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "agw": {
+      "type": "stdio",
+      "command": "agw",
+      "args": ["mcp", "serve"],
+      "env": {}
+    }
+  }
+}

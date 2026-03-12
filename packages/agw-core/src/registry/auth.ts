@@ -1,0 +1,95 @@
+import { authApproval, authNone, authSession, defineCommand, exposure, jsonOutput, readMutation } from "./helpers.js";
+import type { AgwCommandDefinition } from "./types.js";
+
+export const authNamespaceDefinition: AgwCommandDefinition = defineCommand({
+  id: "auth",
+  path: ["auth"],
+  kind: "namespace",
+  description: "Authenticate through the AGW companion flow and manage signer approval lifecycle.",
+  status: "planned",
+  inputMode: "json",
+  auth: authNone(),
+  mutation: readMutation(),
+  output: jsonOutput(false, false),
+  exposure: exposure(true, false),
+  children: [
+    defineCommand({
+      id: "auth.init",
+      path: ["auth", "init"],
+      kind: "command",
+      description: "Start the browser-based AGW approval flow and provision local session state.",
+      status: "implemented",
+      inputMode: "json",
+      auth: authApproval(),
+      requestSchema: {
+        type: "object",
+        properties: {
+          chainId: { type: "number" },
+          appUrl: { type: "string" },
+          storageDir: { type: "string" },
+          rpcUrl: { type: "string" },
+          execute: { type: "boolean", default: false },
+        },
+        required: ["chainId"],
+      },
+      responseSchema: {
+        type: "object",
+        properties: {
+          preview: { type: "boolean" },
+          requiresExplicitExecute: { type: "boolean" },
+          action: { type: "string" },
+          approved: { type: "boolean" },
+          accountAddress: { type: "string" },
+          chainId: { type: "number" },
+          status: { type: "string" },
+          signerId: { type: "string" },
+          walletId: { type: "string" },
+          policyPreset: { type: "string" },
+          appUrl: { type: "string" },
+          storageDir: { type: "string" },
+        },
+      },
+      mutation: {
+        risk: "state_change",
+        requiresExplicitExecute: true,
+        supportsDryRun: false,
+      },
+      output: jsonOutput(false, false),
+      exposure: exposure(true, false, ["confirm browser-based signer approval before opening the companion flow"]),
+    }),
+    defineCommand({
+      id: "auth.revoke",
+      path: ["auth", "revoke"],
+      kind: "command",
+      description: "Revoke the current AGW signer through the companion web flow.",
+      status: "implemented",
+      inputMode: "json",
+      auth: authSession("active_required"),
+      requestSchema: {
+        type: "object",
+        properties: {
+          execute: { type: "boolean", default: false },
+        },
+      },
+      responseSchema: {
+        type: "object",
+        properties: {
+          preview: { type: "boolean" },
+          requiresExplicitExecute: { type: "boolean" },
+          action: { type: "string" },
+          revoked: { type: "boolean" },
+          accountAddress: { type: "string" },
+          chainId: { type: "number" },
+          signerId: { type: "string" },
+        },
+      },
+      mutation: {
+        risk: "destructive",
+        requiresExplicitExecute: true,
+        supportsDryRun: false,
+      },
+      output: jsonOutput(false, false),
+      exposure: exposure(true, false, ["confirm signer revocation intent with the user before execution"]),
+    }),
+  ],
+});

@@ -2,7 +2,7 @@ import {
   ZeroExQuoteError,
   createZeroExQuoteAdapter,
   type ZeroExQuote,
-} from "../src/integrations/zeroex/quote-adapter.js";
+} from "../packages/agw-core/src/integrations/zeroex/quote-adapter.js";
 
 interface MockResponseInput {
   ok: boolean;

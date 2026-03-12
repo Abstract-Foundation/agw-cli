@@ -1,4 +1,4 @@
-import { resolveZeroExConfig } from "../src/config/zeroex.js";
+import { resolveZeroExConfig } from "../packages/agw-core/src/config/zeroex.js";
 
 describe("0x config resolution", () => {
   it("returns undefined api key by default", () => {

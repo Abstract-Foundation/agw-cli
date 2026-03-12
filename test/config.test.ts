@@ -1,5 +1,5 @@
 import { abstract, abstractTestnet } from "viem/chains";
-import { resolveNetworkConfig } from "../src/config/network.js";
+import { resolveNetworkConfig } from "../packages/agw-core/src/config/network.js";
 
 describe("network config resolution", () => {
   it("defaults to Abstract mainnet with default RPC", () => {

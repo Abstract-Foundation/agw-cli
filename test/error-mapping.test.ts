@@ -1,5 +1,5 @@
-import { ZeroExQuoteError } from "../src/integrations/zeroex/quote-adapter.js";
-import { createMcpToolError, toMcpErrorContract } from "../src/errors/contract.js";
+import { ZeroExQuoteError } from "../packages/agw-core/src/integrations/zeroex/quote-adapter.js";
+import { createMcpToolError, toMcpErrorContract } from "../packages/agw-core/src/errors/contract.js";
 
 describe("error mapping", () => {
   it("preserves structured McpToolError fields", () => {

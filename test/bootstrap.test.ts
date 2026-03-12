@@ -2,24 +2,24 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { generateKeyPairSync, sign as signPayload } from "node:crypto";
-import type { PrivySignerInitBundlePayload } from "../src/auth/callback.js";
-import { computePublicKeyFingerprint } from "../src/privy/auth.js";
-import type { Logger } from "../src/utils/logger.js";
-import { parseInitSignerBundleInput } from "../src/auth/callback.js";
-import { materializeSessionFromBundle } from "../src/auth/provision.js";
+import type { PrivySignerInitBundlePayload } from "../packages/agw-core/src/auth/callback.js";
+import { computePublicKeyFingerprint } from "../packages/agw-core/src/privy/auth.js";
+import type { Logger } from "../packages/agw-core/src/utils/logger.js";
+import { parseInitSignerBundleInput } from "../packages/agw-core/src/auth/callback.js";
+import { materializeSessionFromBundle } from "../packages/agw-core/src/auth/provision.js";
 
 jest.mock("open", () => ({
   __esModule: true,
   default: jest.fn(),
 }));
 
-jest.mock("../src/auth/handoff.js", () => ({
+jest.mock("../packages/agw-core/src/auth/handoff.js", () => ({
   startCallbackServer: jest.fn(),
 }));
 
 import open from "open";
-import { runBootstrapFlow } from "../src/auth/bootstrap.js";
-import { startCallbackServer } from "../src/auth/handoff.js";
+import { runBootstrapFlow } from "../packages/agw-core/src/auth/bootstrap.js";
+import { startCallbackServer } from "../packages/agw-core/src/auth/handoff.js";
 
 const openMock = open as unknown as jest.Mock;
 const startServerMock = startCallbackServer as unknown as jest.Mock;

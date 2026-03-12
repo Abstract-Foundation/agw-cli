@@ -1,0 +1,101 @@
+import { authSession, defineCommand, emptyObjectSchema, exposure, jsonOutput, listResponseSchema, ndjsonOutput, readMutation } from "./helpers.js";
+import type { AgwCommandDefinition } from "./types.js";
+
+export const walletNamespaceDefinition: AgwCommandDefinition = defineCommand({
+  id: "wallet",
+  path: ["wallet"],
+  kind: "namespace",
+  description: "Read wallet identity, balances, and token inventory.",
+  status: "planned",
+  inputMode: "json",
+  auth: authSession("active_required"),
+  mutation: readMutation(),
+  output: ndjsonOutput(true, true),
+  exposure: exposure(true, true),
+  children: [
+    defineCommand({
+      id: "wallet.address",
+      path: ["wallet", "address"],
+      kind: "command",
+      description: "Return the linked AGW account address.",
+      status: "implemented",
+      inputMode: "json",
+      auth: authSession("active_required"),
+      requestSchema: emptyObjectSchema(),
+      responseSchema: {
+        type: "object",
+        properties: {
+          accountAddress: { type: "string" },
+          chainId: { type: "number" },
+        },
+        required: ["accountAddress", "chainId"],
+      },
+      mutation: readMutation(),
+      output: jsonOutput(true, false),
+      exposure: exposure(true, true),
+    }),
+    defineCommand({
+      id: "wallet.balances",
+      path: ["wallet", "balances"],
+      kind: "command",
+      description: "Return native and token balances for the linked AGW account.",
+      status: "implemented",
+      inputMode: "json",
+      auth: authSession("active_required"),
+      requestSchema: {
+        type: "object",
+        properties: {
+          chainId: { type: "number" },
+          fields: { type: "array", items: { type: "string" } },
+        },
+      },
+      responseSchema: {
+        type: "object",
+        properties: {
+          accountAddress: { type: "string" },
+          chainId: { type: "number" },
+          balances: { type: "array" },
+        },
+        required: ["accountAddress", "chainId", "balances"],
+      },
+      mutation: readMutation(),
+      output: jsonOutput(true, false),
+      exposure: exposure(true, true, ["add field selection to avoid returning unneeded balance fields"]),
+    }),
+    defineCommand({
+      id: "wallet.tokens",
+      path: ["wallet", "tokens"],
+      kind: "namespace",
+      description: "Read token inventory with response-shaping options for agent-safe reads.",
+      status: "planned",
+      inputMode: "json",
+      auth: authSession("active_required"),
+      mutation: readMutation(),
+      output: ndjsonOutput(true, true),
+      exposure: exposure(true, true),
+      children: [
+        defineCommand({
+          id: "wallet.tokens.list",
+          path: ["wallet", "tokens", "list"],
+          kind: "command",
+          description: "Return token inventory with response-shaping options for agent-safe reads.",
+          status: "implemented",
+          inputMode: "json",
+          auth: authSession("active_required"),
+          requestSchema: {
+            type: "object",
+            properties: {
+              cursor: { type: "string" },
+              pageSize: { type: "number" },
+              fields: { type: "array", items: { type: "string" } },
+            },
+          },
+          responseSchema: listResponseSchema,
+          mutation: readMutation(),
+          output: ndjsonOutput(true, true),
+          exposure: exposure(true, true, ["prefer NDJSON pagination for large token inventories"]),
+        }),
+      ],
+    }),
+  ],
+});
