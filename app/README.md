@@ -1,6 +1,8 @@
 # AGW MCP Hosted Onboarding App
 
-This package hosts the browser-side onboarding flow for `agw-mcp init`.
+This package hosts the browser-side onboarding flow for the CLI bootstrap path: `agw-mcp init` today, and `agw init` once the rename release ships.
+
+See `../meta/rename-compatibility-strategy.md` for the canonical package/binary migration rules.
 
 ## Entry Point
 

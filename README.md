@@ -6,6 +6,12 @@
 
 MCP server for Abstract wallet, chain, and Portal API data.
 
+## Naming Roadmap
+
+The current published package is `@abstract-foundation/agw-mcp`, and the commands below reflect what works today. The repo plan is to rename the canonical repo/package/binary identity to `agw`, while keeping `@abstract-foundation/agw-mcp` and `agw-mcp` as compatibility shims during the migration window.
+
+See [meta/rename-compatibility-strategy.md](meta/rename-compatibility-strategy.md) for the locked rollout, binary, and install-flow rules.
+
 ## Quick Start
 
 ```bash

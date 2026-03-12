@@ -1,7 +1,16 @@
-# Product Brief: AGW MCP
+# Product Brief: AGW
 
 ## Mission
 Enable Abstract users with AGW wallets to use AI agents for common wallet operations through session keys.
+
+## Product Identity
+- Canonical long-term product identity: `agw`
+- Current shipping repo identity: `Abstract-Foundation/agw-mcp`
+- Canonical repo target after rename: `Abstract-Foundation/agw`
+- Current shipping npm identity: `@abstract-foundation/agw-mcp`
+- Canonical CLI target after rename: `agw`
+- Compatibility package/binary during migration: `@abstract-foundation/agw-mcp` and `agw-mcp`
+- Source of truth for rollout constraints: `meta/rename-compatibility-strategy.md`
 
 ## Primary User (v1)
 - End users of Abstract Global Wallet who want AI-assisted wallet interactions.

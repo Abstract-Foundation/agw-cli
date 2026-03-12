@@ -1,7 +1,15 @@
-# AGW MCP PRD (v1)
+# AGW PRD (v1)
 
 ## Scope
 Build a local stdio MCP server and local companion app for AGW users to perform common crypto wallet actions through session keys.
+
+## Naming + Compatibility Requirements
+- The steady-state repo, package, and binary identity is `agw`.
+- The current package, `@abstract-foundation/agw-mcp`, must remain the migration source and compatibility install path until the rename rollout completes.
+- The canonical CLI binary after the rename is `agw`; `agw-mcp` is legacy-only and should live in the compatibility package, not alongside the canonical binary.
+- The MCP server alias remains `agw` so client configuration names stay stable.
+- Local state migration from `~/.agw-mcp` is a separate follow-up; the rename release should not force re-onboarding.
+- Detailed rollout rules live in `meta/rename-compatibility-strategy.md`.
 
 ## Core Tool Surface (v1)
 - `get_wallet_address`

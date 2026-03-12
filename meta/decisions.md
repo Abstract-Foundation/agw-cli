@@ -2,7 +2,7 @@
 
 | id | date | decision | rationale | status |
 | --- | --- | --- | --- | --- |
-| ADR-001 | 2026-02-18 | Use standalone `agw-mcp` repo | Separate release/security surface from SDK monorepo | accepted |
+| ADR-001 | 2026-02-18 | Use standalone repo (initially `agw-mcp`) | Separate release/security surface from SDK monorepo; canonical rename handled later by ADR-020 | superseded |
 | ADR-002 | 2026-02-18 | Session-key-only model for v1 | Align with AGW non-custodial design | accepted |
 | ADR-003 | 2026-02-18 | Local stdio MCP first | Faster iteration with lower operational risk | accepted |
 | ADR-004 | 2026-02-18 | Direct-to-main autonomous mode | Maximize unattended overnight throughput | accepted |
@@ -21,3 +21,4 @@
 | ADR-017 | 2026-02-18 | Enforce session-key least-privilege defaults | Align with AGW session-key safety model and reduce autonomous agent blast radius | accepted |
 | ADR-018 | 2026-02-18 | Require AGW action parity for write/sign tools | Keep MCP execution paths aligned with official AGW SDK action semantics | accepted |
 | ADR-019 | 2026-02-18 | Harden loop runtime for unattended operation | Add stale-lock recovery, retries, and overnight wrapper to reduce operational interruptions | accepted |
+| ADR-020 | 2026-03-12 | Converge repo/package/binary identity on `agw` with `@abstract-foundation/agw-mcp` compatibility shim | Keeps long-term naming simple without breaking existing installs or MCP registrations | accepted |

@@ -1,15 +1,21 @@
 # User Flows (v1)
 
+## Naming Assumptions
+- Fresh-install docs should use `agw` once the rename release ships.
+- The compatibility path remains `@abstract-foundation/agw-mcp` plus the `agw-mcp` binary during the migration window.
+- The MCP server alias stays `agw`, and the local state path stays `~/.agw-mcp` until a separate filesystem migration ticket lands.
+- See `meta/rename-compatibility-strategy.md` for the rollout rules.
+
 ## Flow 1: First-Time Setup
-1. User installs `agw-mcp` and connects it to an MCP-compatible agent.
-2. User runs `agw-mcp init`.
+1. User installs the MCP server package and connects it to an MCP-compatible agent.
+2. User runs `agw init` on the canonical path or `agw-mcp init` through the compatibility package during the migration window.
 3. User opens the local companion app and selects a safe policy preset (or custom mode).
 4. User previews the computed policy payload and risk assessment (custom mode preloads a safe default template).
 5. If the policy is high risk, user explicitly confirms risk in companion UI before redirect.
 6. User completes AGW session provisioning flow.
 7. Companion receives callback payload, signs it with the one-time handoff secret, and forwards it to local MCP callback URL.
 8. Session is persisted locally and validated.
-9. User runs `agw-mcp serve` and confirms `get_session_status` is active.
+9. User runs `agw serve` on the canonical path or `agw-mcp serve` through the compatibility package and confirms `get_session_status` is active.
 
 Success criteria:
 - Setup completes without manual file editing.
