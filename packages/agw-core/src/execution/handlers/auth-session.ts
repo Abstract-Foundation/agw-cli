@@ -5,7 +5,6 @@ import { revokeSessionTool } from "../../tools/revoke-session.js";
 import { AgwCliError } from "../../errors.js";
 import type { CommandHandler } from "../types.js";
 import { createSessionStorage } from "../context.js";
-import { parseOptionalString } from "../validation.js";
 
 export const authSessionHandlers: Record<string, CommandHandler> = {
   "auth.init": async (input, context) => {
@@ -21,17 +20,17 @@ export const authSessionHandlers: Record<string, CommandHandler> = {
         requiresExplicitExecute: true,
         action: "open_companion_approval",
         chainId,
-        appUrl: parseOptionalString(input.appUrl, "appUrl") ?? null,
-        storageDir: parseOptionalString(input.storageDir, "storageDir") ?? null,
+        appUrl: context.runtime.appUrl ?? null,
+        homeDir: context.runtime.homeDir ?? null,
       };
     }
 
     const { runBootstrapFlow } = await import("../../auth/bootstrap.js");
     const session = await runBootstrapFlow(context.logger, {
       chainId,
-      rpcUrl: parseOptionalString(input.rpcUrl, "rpcUrl"),
-      appUrl: parseOptionalString(input.appUrl, "appUrl"),
-      storageDir: parseOptionalString(input.storageDir, "storageDir"),
+      rpcUrl: context.runtime.rpcUrl,
+      appUrl: context.runtime.appUrl,
+      homeDir: context.runtime.homeDir,
     });
 
     return {
@@ -66,7 +65,7 @@ export const authSessionHandlers: Record<string, CommandHandler> = {
   },
   "session.status": async (_input, context) => getSessionStatusTool.handler({}, context),
   "session.doctor": async (input, context) => {
-    const storage = createSessionStorage(input);
+    const storage = createSessionStorage(input, { homeDir: context.runtime.homeDir });
     const session = context.sessionManager.getSession();
     const readiness = context.sessionManager.getSessionReadiness();
     const checks = [

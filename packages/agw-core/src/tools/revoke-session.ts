@@ -24,7 +24,7 @@ export const revokeSessionTool: ToolHandler = {
     }
 
     await runRemoteRevokeFlow(context.logger, session, {
-      appUrl: process.env.AGW_MCP_APP_URL,
+      appUrl: context.runtime.appUrl,
     });
 
     context.sessionManager.markSessionRevoked();

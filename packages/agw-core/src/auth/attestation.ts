@@ -49,8 +49,8 @@ function isLoopbackAppUrl(appUrl: string): boolean {
 }
 
 export async function resolveCallbackVerificationConfig(appUrl: string): Promise<CallbackVerificationConfig> {
-  const explicitPublicKey = process.env.AGW_MCP_CALLBACK_SIGNING_PUBLIC_KEY?.trim();
-  const explicitIssuer = process.env.AGW_MCP_CALLBACK_SIGNING_ISSUER?.trim() || DEFAULT_CALLBACK_ISSUER;
+  const explicitPublicKey = process.env.AGW_CALLBACK_SIGNING_PUBLIC_KEY?.trim();
+  const explicitIssuer = process.env.AGW_CALLBACK_SIGNING_ISSUER?.trim() || DEFAULT_CALLBACK_ISSUER;
   if (explicitPublicKey) {
     return {
       issuer: explicitIssuer,
@@ -61,7 +61,7 @@ export async function resolveCallbackVerificationConfig(appUrl: string): Promise
 
   if (!isLoopbackAppUrl(appUrl)) {
     throw new Error(
-      "AGW_MCP_CALLBACK_SIGNING_PUBLIC_KEY is required for non-localhost onboarding URLs.",
+      "AGW_CALLBACK_SIGNING_PUBLIC_KEY is required for non-localhost onboarding URLs.",
     );
   }
 

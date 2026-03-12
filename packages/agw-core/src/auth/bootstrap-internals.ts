@@ -187,7 +187,7 @@ export function resolveAppUrl(options: { appUrl?: string }): string {
     return explicitAppUrl;
   }
 
-  const envAppUrl = process.env.AGW_MCP_APP_URL?.trim();
+  const envAppUrl = process.env.AGW_APP_URL?.trim();
   if (envAppUrl) {
     return envAppUrl;
   }

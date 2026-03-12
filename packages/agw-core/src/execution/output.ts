@@ -1,4 +1,5 @@
 import { AgwCliError } from "../errors.js";
+import type { AgwSanitizeProfile } from "../registry/types.js";
 
 function isJsonRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -66,17 +67,46 @@ export function applyFieldSelection(value: unknown, fields: string[] | undefined
   return result;
 }
 
+const PROMPT_INJECTION_PATTERNS = [
+  /ignore\s+(all\s+)?(previous|prior|earlier)\s+instructions?/i,
+  /follow\s+these\s+instructions\s+instead/i,
+  /system\s+prompt/i,
+  /developer\s+instructions?/i,
+  /tool\s+call/i,
+  /send\s+(all\s+)?funds/i,
+  /forward\s+all/i,
+];
+
+function sanitizeString(value: string): string {
+  if (PROMPT_INJECTION_PATTERNS.some(pattern => pattern.test(value))) {
+    return "[SANITIZED: untrusted instruction-like content removed]";
+  }
+  return value;
+}
+
+export function sanitizeOutput(value: unknown, profile: AgwSanitizeProfile): unknown {
+  if (profile === "off") {
+    return value;
+  }
+  if (typeof value === "string") {
+    return sanitizeString(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map(entry => sanitizeOutput(entry, profile));
+  }
+  if (!isJsonRecord(value)) {
+    return value;
+  }
+
+  return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, sanitizeOutput(entry, profile)]));
+}
+
 export function formatCommandOutput(value: unknown, mode: "json" | "ndjson"): string {
   if (mode === "ndjson") {
-    const items = Array.isArray(value)
-      ? value
-      : isJsonRecord(value) && Array.isArray(value.items)
-        ? value.items
-        : null;
-
-    if (items) {
-      return `${items.map(item => JSON.stringify(item)).join("\n")}\n`;
+    if (Array.isArray(value)) {
+      return `${value.map(item => JSON.stringify(item)).join("\n")}\n`;
     }
+    return `${JSON.stringify(value)}\n`;
   }
 
   return `${JSON.stringify(value, null, 2)}\n`;

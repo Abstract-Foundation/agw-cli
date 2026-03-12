@@ -1,4 +1,4 @@
-const ZEROEX_API_KEY_ENV_KEYS = ["AGW_MCP_ZEROEX_API_KEY", "ZEROEX_API_KEY"] as const;
+const ZEROEX_API_KEY_ENV_KEYS = ["AGW_ZEROEX_API_KEY"] as const;
 
 export interface ResolveZeroExConfigInput {
   apiKey?: string;

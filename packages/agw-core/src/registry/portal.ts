@@ -1,4 +1,19 @@
-import { authSession, defineCommand, exposure, jsonOutput, listResponseSchema, ndjsonOutput, readMutation } from "./helpers.js";
+import {
+  authSession,
+  defineCommand,
+  exposure,
+  fieldsSchema,
+  idSchema,
+  jsonOutput,
+  listResponseSchema,
+  ndjsonOutput,
+  objectSchema,
+  opaqueObjectSchema,
+  paginationRequestSchema,
+  readMutation,
+  sanitize,
+  addressSchema,
+} from "./helpers.js";
 import type { AgwCommandDefinition } from "./types.js";
 
 export const portalNamespaceDefinition: AgwCommandDefinition = defineCommand({
@@ -33,17 +48,14 @@ export const portalNamespaceDefinition: AgwCommandDefinition = defineCommand({
           status: "implemented",
           inputMode: "json",
           auth: authSession("active_required"),
-          requestSchema: {
-            type: "object",
-            properties: {
-              cursor: { type: "string" },
-              pageSize: { type: "number" },
-              fields: { type: "array", items: { type: "string" } },
-            },
-          },
-          responseSchema: listResponseSchema,
+          requestSchema: objectSchema({
+            ...paginationRequestSchema().properties,
+            fields: fieldsSchema(),
+          }),
+          responseSchema: listResponseSchema(opaqueObjectSchema("Portal app record.")),
           mutation: readMutation(),
           output: ndjsonOutput(true, true),
+          sanitization: sanitize(true, "strict"),
           exposure: exposure(true, true, ["always page and trim Portal app lists to the fields needed for the task"]),
         }),
         defineCommand({
@@ -54,23 +66,22 @@ export const portalNamespaceDefinition: AgwCommandDefinition = defineCommand({
           status: "implemented",
           inputMode: "json",
           auth: authSession("active_required"),
-          requestSchema: {
-            type: "object",
-            properties: {
-              appId: { type: "string" },
-              fields: { type: "array", items: { type: "string" } },
+          requestSchema: objectSchema(
+            {
+              appId: idSchema("Portal app identifier."),
+              fields: fieldsSchema(),
             },
-            required: ["appId"],
-          },
-          responseSchema: {
-            type: "object",
-            properties: {
-              app: { type: "object" },
+            { required: ["appId"] },
+          ),
+          responseSchema: objectSchema(
+            {
+              app: opaqueObjectSchema("Opaque Portal app payload."),
             },
-            required: ["app"],
-          },
+            { required: ["app"] },
+          ),
           mutation: readMutation(),
           output: jsonOutput(true, false),
+          sanitization: sanitize(true, "strict"),
           exposure: exposure(true, true),
         }),
       ],
@@ -95,19 +106,18 @@ export const portalNamespaceDefinition: AgwCommandDefinition = defineCommand({
           status: "implemented",
           inputMode: "json",
           auth: authSession("active_required"),
-          requestSchema: {
-            type: "object",
-            properties: {
-              appId: { type: "string" },
-              cursor: { type: "string" },
-              pageSize: { type: "number" },
-              fields: { type: "array", items: { type: "string" } },
+          requestSchema: objectSchema(
+            {
+              appId: idSchema("Portal app identifier."),
+              ...paginationRequestSchema().properties,
+              fields: fieldsSchema(),
             },
-            required: ["appId"],
-          },
-          responseSchema: listResponseSchema,
+            { required: ["appId"] },
+          ),
+          responseSchema: listResponseSchema(opaqueObjectSchema("Portal stream record.")),
           mutation: readMutation(),
           output: ndjsonOutput(true, true),
+          sanitization: sanitize(true, "strict"),
           exposure: exposure(true, true),
         }),
       ],
@@ -132,23 +142,22 @@ export const portalNamespaceDefinition: AgwCommandDefinition = defineCommand({
           status: "implemented",
           inputMode: "json",
           auth: authSession("active_required"),
-          requestSchema: {
-            type: "object",
-            properties: {
-              address: { type: "string" },
-              fields: { type: "array", items: { type: "string" } },
+          requestSchema: objectSchema(
+            {
+              address: addressSchema("Profile address."),
+              fields: fieldsSchema(),
             },
-            required: ["address"],
-          },
-          responseSchema: {
-            type: "object",
-            properties: {
-              profile: { type: "object" },
+            { required: ["address"] },
+          ),
+          responseSchema: objectSchema(
+            {
+              profile: opaqueObjectSchema("Opaque Portal user profile payload."),
             },
-            required: ["profile"],
-          },
+            { required: ["profile"] },
+          ),
           mutation: readMutation(),
           output: jsonOutput(true, false),
+          sanitization: sanitize(true, "strict"),
           exposure: exposure(true, true),
         }),
       ],

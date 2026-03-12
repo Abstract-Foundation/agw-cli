@@ -1,4 +1,18 @@
-import { authSession, defineCommand, exposure, jsonOutput, writeMutation } from "./helpers.js";
+import {
+  authSession,
+  defineCommand,
+  exposure,
+  jsonOutput,
+  opaqueObjectSchema,
+  arraySchema,
+  stringSchema,
+  booleanSchema,
+  addressSchema,
+  decimalStringSchema,
+  writeMutation,
+  objectSchema,
+  unknownSchema,
+} from "./helpers.js";
 import type { AgwCommandDefinition } from "./types.js";
 
 export const contractNamespaceDefinition: AgwCommandDefinition = defineCommand({
@@ -21,31 +35,27 @@ export const contractNamespaceDefinition: AgwCommandDefinition = defineCommand({
       status: "implemented",
       inputMode: "json",
       auth: authSession("write_ready_required"),
-      requestSchema: {
-        type: "object",
-        properties: {
-          address: { type: "string" },
-          abi: { type: "array" },
-          functionName: { type: "string" },
-          args: { type: "array" },
-          value: { type: "string" },
-          execute: { type: "boolean", default: false },
+      requestSchema: objectSchema(
+        {
+          address: addressSchema("Target contract address."),
+          abi: arraySchema(opaqueObjectSchema("ABI entry.")),
+          functionName: stringSchema(),
+          args: arraySchema(unknownSchema({ description: "Function argument payload." })),
+          value: decimalStringSchema("Wei value as a decimal string."),
+          execute: booleanSchema({ default: false }),
         },
-        required: ["address", "abi", "functionName"],
-      },
-      responseSchema: {
-        type: "object",
-        properties: {
-          preview: { type: "boolean" },
-          requiresExplicitExecute: { type: "boolean" },
-          action: { type: "string" },
-          txHash: { type: "string" },
-          accountAddress: { type: "string" },
-          chainId: { type: "number" },
-          explorer: { type: "object" },
-          contract: { type: "object" },
-        },
-      },
+        { required: ["address", "abi", "functionName"] },
+      ),
+      responseSchema: objectSchema({
+        preview: booleanSchema(),
+        requiresExplicitExecute: booleanSchema(),
+        action: stringSchema(),
+        txHash: stringSchema(),
+        accountAddress: addressSchema("Linked AGW account address."),
+        chainId: { type: "integer", minimum: 0 },
+        explorer: opaqueObjectSchema("Explorer metadata."),
+        contract: opaqueObjectSchema("Contract execution payload."),
+      }),
       mutation: writeMutation(),
       output: jsonOutput(true, false),
       exposure: exposure(true, true),
@@ -58,28 +68,24 @@ export const contractNamespaceDefinition: AgwCommandDefinition = defineCommand({
       status: "implemented",
       inputMode: "json",
       auth: authSession("write_ready_required"),
-      requestSchema: {
-        type: "object",
-        properties: {
-          bytecode: { type: "string" },
-          abi: { type: "array" },
-          execute: { type: "boolean", default: false },
+      requestSchema: objectSchema(
+        {
+          bytecode: stringSchema(),
+          abi: arraySchema(opaqueObjectSchema("ABI entry.")),
+          execute: booleanSchema({ default: false }),
         },
-        required: ["abi", "bytecode"],
-      },
-      responseSchema: {
-        type: "object",
-        properties: {
-          preview: { type: "boolean" },
-          requiresExplicitExecute: { type: "boolean" },
-          execute: { type: "boolean" },
-          txHash: { type: "string" },
-          accountAddress: { type: "string" },
-          chainId: { type: "number" },
-          explorer: { type: "object" },
-          deployment: { type: "object" },
-        },
-      },
+        { required: ["abi", "bytecode"] },
+      ),
+      responseSchema: objectSchema({
+        preview: booleanSchema(),
+        requiresExplicitExecute: booleanSchema(),
+        execute: booleanSchema(),
+        txHash: stringSchema(),
+        accountAddress: addressSchema("Linked AGW account address."),
+        chainId: { type: "integer", minimum: 0 },
+        explorer: opaqueObjectSchema("Explorer metadata."),
+        deployment: opaqueObjectSchema("Deployment result payload."),
+      }),
       mutation: writeMutation(),
       output: jsonOutput(true, false),
       exposure: exposure(true, true),

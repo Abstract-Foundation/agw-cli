@@ -1,4 +1,19 @@
-import { authApproval, authNone, authSession, defineCommand, exposure, jsonOutput, readMutation } from "./helpers.js";
+import {
+  authApproval,
+  authNone,
+  authSession,
+  booleanSchema,
+  config,
+  defineCommand,
+  exposure,
+  integerSchema,
+  jsonOutput,
+  objectSchema,
+  readMutation,
+  sanitize,
+  stringSchema,
+  writeMutation,
+} from "./helpers.js";
 import type { AgwCommandDefinition } from "./types.js";
 
 export const authNamespaceDefinition: AgwCommandDefinition = defineCommand({
@@ -21,41 +36,36 @@ export const authNamespaceDefinition: AgwCommandDefinition = defineCommand({
       status: "implemented",
       inputMode: "json",
       auth: authApproval(),
-      requestSchema: {
-        type: "object",
-        properties: {
-          chainId: { type: "number" },
-          appUrl: { type: "string" },
-          storageDir: { type: "string" },
-          rpcUrl: { type: "string" },
-          execute: { type: "boolean", default: false },
+      requestSchema: objectSchema(
+        {
+          chainId: integerSchema({ description: "Target chain id for onboarding." }),
+          execute: booleanSchema({ description: "Execute immediately when true. Preview by default.", default: false }),
         },
-        required: ["chainId"],
-      },
-      responseSchema: {
-        type: "object",
-        properties: {
-          preview: { type: "boolean" },
-          requiresExplicitExecute: { type: "boolean" },
-          action: { type: "string" },
-          approved: { type: "boolean" },
-          accountAddress: { type: "string" },
-          chainId: { type: "number" },
-          status: { type: "string" },
-          signerId: { type: "string" },
-          walletId: { type: "string" },
-          policyPreset: { type: "string" },
-          appUrl: { type: "string" },
-          storageDir: { type: "string" },
-        },
-      },
-      mutation: {
-        risk: "state_change",
-        requiresExplicitExecute: true,
-        supportsDryRun: false,
-      },
+        { required: ["chainId"] },
+      ),
+      responseSchema: objectSchema({
+        preview: booleanSchema(),
+        requiresExplicitExecute: booleanSchema(),
+        action: stringSchema(),
+        approved: booleanSchema(),
+        accountAddress: stringSchema(),
+        chainId: integerSchema(),
+        status: stringSchema(),
+        signerId: stringSchema(),
+        walletId: stringSchema(),
+        policyPreset: stringSchema(),
+        appUrl: stringSchema(),
+        homeDir: stringSchema(),
+      }),
+      mutation: writeMutation(),
       output: jsonOutput(false, false),
+      sanitization: sanitize(false),
       exposure: exposure(true, false, ["confirm browser-based signer approval before opening the companion flow"]),
+      config: config(
+        { env: "AGW_APP_URL", description: "Companion onboarding app URL." },
+        { env: "AGW_HOME", description: "AGW home directory for local session state." },
+        { env: "AGW_CALLBACK_SIGNING_PUBLIC_KEY", description: "Companion callback signing public key for hosted onboarding." },
+      ),
     }),
     defineCommand({
       id: "auth.revoke",
@@ -65,31 +75,23 @@ export const authNamespaceDefinition: AgwCommandDefinition = defineCommand({
       status: "implemented",
       inputMode: "json",
       auth: authSession("active_required"),
-      requestSchema: {
-        type: "object",
-        properties: {
-          execute: { type: "boolean", default: false },
-        },
-      },
-      responseSchema: {
-        type: "object",
-        properties: {
-          preview: { type: "boolean" },
-          requiresExplicitExecute: { type: "boolean" },
-          action: { type: "string" },
-          revoked: { type: "boolean" },
-          accountAddress: { type: "string" },
-          chainId: { type: "number" },
-          signerId: { type: "string" },
-        },
-      },
-      mutation: {
-        risk: "destructive",
-        requiresExplicitExecute: true,
-        supportsDryRun: false,
-      },
+      requestSchema: objectSchema({
+        execute: booleanSchema({ description: "Execute immediately when true. Preview by default.", default: false }),
+      }),
+      responseSchema: objectSchema({
+        preview: booleanSchema(),
+        requiresExplicitExecute: booleanSchema(),
+        action: stringSchema(),
+        revoked: booleanSchema(),
+        accountAddress: stringSchema(),
+        chainId: integerSchema(),
+        signerId: stringSchema(),
+      }),
+      mutation: writeMutation("destructive"),
       output: jsonOutput(false, false),
+      sanitization: sanitize(false),
       exposure: exposure(true, false, ["confirm signer revocation intent with the user before execution"]),
+      config: config({ env: "AGW_APP_URL", description: "Companion onboarding app URL." }),
     }),
   ],
 });

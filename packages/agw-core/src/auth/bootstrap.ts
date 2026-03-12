@@ -21,15 +21,15 @@ import { materializeSessionFromBundle, resolveStorageDir } from "./provision.js"
 export interface BootstrapOptions {
   appUrl?: string;
   chainId: number;
+  homeDir?: string;
   rpcUrl?: string;
-  storageDir?: string;
 }
 
 export async function runBootstrapFlow(logger: Logger, options: BootstrapOptions): Promise<AgwSessionData> {
   const appUrl = resolveAppUrl(options);
   validateAppUrl(appUrl);
 
-  const storageDir = resolveStorageDir(options.storageDir);
+  const storageDir = resolveStorageDir(options.homeDir);
   const lock = acquireBootstrapLock(storageDir);
 
   const storage = new SessionStorage(storageDir);

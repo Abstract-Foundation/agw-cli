@@ -1,4 +1,19 @@
-import { authNone, defineCommand, exposure, jsonOutput, listResponseSchema, ndjsonOutput, readMutation } from "./helpers.js";
+import {
+  authNone,
+  defineCommand,
+  exposure,
+  fieldsSchema,
+  idSchema,
+  jsonOutput,
+  listResponseSchema,
+  ndjsonOutput,
+  objectSchema,
+  opaqueObjectSchema,
+  paginationRequestSchema,
+  readMutation,
+  sanitize,
+  stringSchema,
+} from "./helpers.js";
 import type { AgwCommandDefinition } from "./types.js";
 
 export const appNamespaceDefinition: AgwCommandDefinition = defineCommand({
@@ -21,17 +36,24 @@ export const appNamespaceDefinition: AgwCommandDefinition = defineCommand({
       status: "implemented",
       inputMode: "json",
       auth: authNone(),
-      requestSchema: {
-        type: "object",
-        properties: {
-          cursor: { type: "string" },
-          pageSize: { type: "number" },
-          fields: { type: "array", items: { type: "string" } },
-        },
-      },
-      responseSchema: listResponseSchema,
+      requestSchema: objectSchema({
+        ...paginationRequestSchema().properties,
+        fields: fieldsSchema(),
+      }),
+      responseSchema: listResponseSchema(
+        objectSchema(
+          {
+            id: idSchema("Shipped AGW app identifier."),
+            name: stringSchema(),
+            description: stringSchema(),
+            skillRefs: { type: "array", items: opaqueObjectSchema("Shipped skill reference metadata.") },
+          },
+          { additionalProperties: true },
+        ),
+      ),
       mutation: readMutation(),
       output: ndjsonOutput(true, true),
+      sanitization: sanitize(false),
       exposure: exposure(true, false),
     }),
     defineCommand({
@@ -42,23 +64,22 @@ export const appNamespaceDefinition: AgwCommandDefinition = defineCommand({
       status: "implemented",
       inputMode: "json",
       auth: authNone(),
-      requestSchema: {
-        type: "object",
-        properties: {
-          appId: { type: "string" },
+      requestSchema: objectSchema(
+        {
+          appId: idSchema("Shipped AGW app identifier."),
         },
-        required: ["appId"],
-      },
-      responseSchema: {
-        type: "object",
-        properties: {
-          app: { type: "object" },
-          skillRefs: { type: "array" },
+        { required: ["appId"] },
+      ),
+      responseSchema: objectSchema(
+        {
+          app: opaqueObjectSchema("Shipped AGW app metadata."),
+          skillRefs: { type: "array", items: opaqueObjectSchema("Shipped skill reference metadata.") },
         },
-        required: ["app", "skillRefs"],
-      },
+        { required: ["app", "skillRefs"] },
+      ),
       mutation: readMutation(),
       output: jsonOutput(true, false),
+      sanitization: sanitize(false),
       exposure: exposure(true, false),
     }),
   ],

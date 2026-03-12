@@ -66,7 +66,7 @@ export class PrivyWalletClient {
         };
       }
 
-      const explicitAppId = process.env.AGW_MCP_PRIVY_APP_ID?.trim();
+      const explicitAppId = process.env.AGW_PRIVY_APP_ID?.trim();
       if (explicitAppId) {
         return {
           appId: explicitAppId,
@@ -76,7 +76,7 @@ export class PrivyWalletClient {
 
       if (!this.isLoopbackAppUrl()) {
         throw new Error(
-          "AGW_MCP_PRIVY_APP_ID is required for non-localhost hosted app URLs when the CLI is running without Privy server credentials.",
+          "AGW_PRIVY_APP_ID is required for non-localhost hosted app URLs when the CLI is running without Privy server credentials.",
         );
       }
 

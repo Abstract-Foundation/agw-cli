@@ -1,15 +1,15 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { resolveAgwHome } from "../config/runtime.js";
 import { isSessionPolicyMeta } from "../policy/meta.js";
 import { authKeyfileExists, deleteAuthKeyfile, formatAuthKeyfile } from "../privy/auth.js";
 import type { AgwSessionData } from "./types.js";
 
-const DEFAULT_STORAGE_DIRNAME = ".agw";
 const LEGACY_STORAGE_DIRNAME = ".agw-mcp";
 
 export function resolveDefaultStorageDir(): string {
-  return path.join(os.homedir(), DEFAULT_STORAGE_DIRNAME);
+  return resolveAgwHome();
 }
 
 export function resolveLegacyStorageDir(): string {
@@ -25,7 +25,7 @@ export class SessionStorage {
 
   constructor(dir?: string) {
     this.explicitDir = dir !== undefined;
-    this.dir = dir ?? resolveDefaultStorageDir();
+    this.dir = dir ?? resolveAgwHome();
     this.filePath = path.join(this.dir, "session.json");
     this.legacyDir = this.explicitDir ? null : resolveLegacyStorageDir();
     this.legacyFilePath = this.legacyDir ? path.join(this.legacyDir, "session.json") : null;

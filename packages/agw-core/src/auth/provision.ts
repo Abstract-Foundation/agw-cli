@@ -18,8 +18,8 @@ export interface VerifiedPrivySignerBinding {
   policyIds: string[];
 }
 
-export function resolveStorageDir(storageDir?: string): string {
-  return storageDir ?? resolveDefaultStorageDir();
+export function resolveStorageDir(homeDir?: string): string {
+  return homeDir ?? resolveDefaultStorageDir();
 }
 
 export function writeAuthKey(privateKeyDer: Buffer, storageDir: string): string {

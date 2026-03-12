@@ -1,7 +1,7 @@
 import { abstract, abstractTestnet, type ChainEIP712 } from "viem/chains";
 
-const CHAIN_ID_ENV_KEYS = ["AGW_MCP_CHAIN_ID", "AGW_CHAIN_ID"] as const;
-const RPC_URL_ENV_KEYS = ["AGW_MCP_RPC_URL", "AGW_RPC_URL"] as const;
+const CHAIN_ID_ENV_KEYS = ["AGW_CHAIN_ID"] as const;
+const RPC_URL_ENV_KEYS = ["AGW_RPC_URL"] as const;
 const SUPPORTED_CHAINS: Record<number, ChainEIP712> = {
   [abstractTestnet.id]: abstractTestnet,
   [abstract.id]: abstract,

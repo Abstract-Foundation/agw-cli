@@ -1,4 +1,4 @@
-import { authNone, authSession, defineCommand, emptyObjectSchema, exposure, jsonOutput, readMutation } from "./helpers.js";
+import { authNone, authSession, config, defineCommand, emptyObjectSchema, exposure, jsonOutput, objectSchema, readMutation, sanitize, stringSchema } from "./helpers.js";
 import type { AgwCommandDefinition } from "./types.js";
 
 export const sessionNamespaceDefinition: AgwCommandDefinition = defineCommand({
@@ -21,25 +21,22 @@ export const sessionNamespaceDefinition: AgwCommandDefinition = defineCommand({
       status: "implemented",
       inputMode: "json",
       auth: authSession("missing_ok"),
-      requestSchema: {
-        type: "object",
-        properties: {
-          storageDir: { type: "string" },
-          fields: { type: "array", items: { type: "string" } },
+      requestSchema: objectSchema({
+        fields: { type: "array", items: stringSchema({ minLength: 1 }) },
+      }),
+      responseSchema: objectSchema(
+        {
+          status: stringSchema(),
+          readiness: stringSchema(),
+          policyPreset: stringSchema(),
         },
-      },
-      responseSchema: {
-        type: "object",
-        properties: {
-          status: { type: "string" },
-          readiness: { type: "string" },
-          policyPreset: { type: "string" },
-        },
-        required: ["status", "readiness"],
-      },
+        { required: ["status", "readiness"] },
+      ),
       mutation: readMutation(),
       output: jsonOutput(true, false),
+      sanitization: sanitize(false),
       exposure: exposure(true, true, ["request only the session fields required for the current reasoning step"]),
+      config: config({ env: "AGW_HOME", description: "AGW home directory for local session state." }),
     }),
     defineCommand({
       id: "session.doctor",
@@ -50,17 +47,30 @@ export const sessionNamespaceDefinition: AgwCommandDefinition = defineCommand({
       inputMode: "json",
       auth: authSession("missing_ok"),
       requestSchema: emptyObjectSchema(),
-      responseSchema: {
-        type: "object",
-        properties: {
+      responseSchema: objectSchema(
+        {
           ok: { type: "boolean" },
-          checks: { type: "array" },
+          checks: {
+            type: "array",
+            items: objectSchema(
+              {
+                name: stringSchema(),
+                ok: { type: "boolean" },
+                detail: stringSchema(),
+              },
+              { additionalProperties: true },
+            ),
+          },
+          status: stringSchema(),
+          readiness: stringSchema(),
         },
-        required: ["ok", "checks"],
-      },
+        { required: ["ok", "checks"] },
+      ),
       mutation: readMutation(),
       output: jsonOutput(false, false),
+      sanitization: sanitize(false),
       exposure: exposure(true, false),
+      config: config({ env: "AGW_HOME", description: "AGW home directory for local session state." }),
     }),
   ],
 });

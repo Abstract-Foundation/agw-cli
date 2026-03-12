@@ -96,7 +96,7 @@ export class Logger {
   }
 
   debug(message: string): void {
-    if (process.env.DEBUG || process.env.AGW_MCP_DEBUG) {
+    if (process.env.DEBUG || process.env.AGW_DEBUG) {
       this.write("DEBUG", message);
     }
   }

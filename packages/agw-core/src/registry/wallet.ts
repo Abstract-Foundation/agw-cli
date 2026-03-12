@@ -1,4 +1,22 @@
-import { authSession, defineCommand, emptyObjectSchema, exposure, jsonOutput, listResponseSchema, ndjsonOutput, readMutation } from "./helpers.js";
+import {
+  addressSchema,
+  authSession,
+  config,
+  defineCommand,
+  emptyObjectSchema,
+  exposure,
+  fieldsSchema,
+  integerSchema,
+  jsonOutput,
+  listResponseSchema,
+  ndjsonOutput,
+  objectSchema,
+  opaqueObjectSchema,
+  paginationRequestSchema,
+  readMutation,
+  sanitize,
+  stringSchema,
+} from "./helpers.js";
 import type { AgwCommandDefinition } from "./types.js";
 
 export const walletNamespaceDefinition: AgwCommandDefinition = defineCommand({
@@ -22,17 +40,18 @@ export const walletNamespaceDefinition: AgwCommandDefinition = defineCommand({
       inputMode: "json",
       auth: authSession("active_required"),
       requestSchema: emptyObjectSchema(),
-      responseSchema: {
-        type: "object",
-        properties: {
-          accountAddress: { type: "string" },
-          chainId: { type: "number" },
+      responseSchema: objectSchema(
+        {
+          accountAddress: addressSchema("Linked AGW account address."),
+          chainId: integerSchema(),
         },
-        required: ["accountAddress", "chainId"],
-      },
+        { required: ["accountAddress", "chainId"] },
+      ),
       mutation: readMutation(),
       output: jsonOutput(true, false),
+      sanitization: sanitize(false),
       exposure: exposure(true, true),
+      config: config({ env: "AGW_HOME", description: "AGW home directory for local session state." }),
     }),
     defineCommand({
       id: "wallet.balances",
@@ -42,25 +61,38 @@ export const walletNamespaceDefinition: AgwCommandDefinition = defineCommand({
       status: "implemented",
       inputMode: "json",
       auth: authSession("active_required"),
-      requestSchema: {
-        type: "object",
-        properties: {
-          chainId: { type: "number" },
-          fields: { type: "array", items: { type: "string" } },
+      requestSchema: objectSchema({
+        fields: fieldsSchema(),
+      }),
+      responseSchema: objectSchema(
+        {
+          accountAddress: addressSchema("Linked AGW account address."),
+          chainId: integerSchema(),
+          balances: {
+            type: "array",
+            items: objectSchema(
+              {
+                symbol: stringSchema(),
+                balance: stringSchema(),
+                tokenAddress: addressSchema("Token contract address."),
+                decimals: integerSchema(),
+                formattedBalance: stringSchema(),
+              },
+              { additionalProperties: true },
+            ),
+          },
         },
-      },
-      responseSchema: {
-        type: "object",
-        properties: {
-          accountAddress: { type: "string" },
-          chainId: { type: "number" },
-          balances: { type: "array" },
-        },
-        required: ["accountAddress", "chainId", "balances"],
-      },
+        { required: ["accountAddress", "chainId", "balances"] },
+      ),
       mutation: readMutation(),
       output: jsonOutput(true, false),
+      sanitization: sanitize(false),
       exposure: exposure(true, true, ["add field selection to avoid returning unneeded balance fields"]),
+      config: config(
+        { env: "AGW_HOME", description: "AGW home directory for local session state." },
+        { env: "AGW_CHAIN_ID", description: "Default chain id for wallet reads." },
+        { env: "AGW_RPC_URL", description: "Optional RPC URL override for wallet reads." },
+      ),
     }),
     defineCommand({
       id: "wallet.tokens",
@@ -82,18 +114,32 @@ export const walletNamespaceDefinition: AgwCommandDefinition = defineCommand({
           status: "implemented",
           inputMode: "json",
           auth: authSession("active_required"),
-          requestSchema: {
-            type: "object",
-            properties: {
-              cursor: { type: "string" },
-              pageSize: { type: "number" },
-              fields: { type: "array", items: { type: "string" } },
-            },
-          },
-          responseSchema: listResponseSchema,
+          requestSchema: objectSchema({
+            ...paginationRequestSchema().properties,
+            fields: fieldsSchema(),
+          }),
+          responseSchema: listResponseSchema(
+            objectSchema(
+              {
+                token: opaqueObjectSchema("Token metadata payload."),
+                tokenAddress: addressSchema("Token contract address."),
+                balance: stringSchema(),
+                rawBalance: stringSchema(),
+                decimals: integerSchema(),
+                formattedBalance: stringSchema(),
+              },
+              { additionalProperties: true },
+            ),
+          ),
           mutation: readMutation(),
           output: ndjsonOutput(true, true),
+          sanitization: sanitize(false),
           exposure: exposure(true, true, ["prefer NDJSON pagination for large token inventories"]),
+          config: config(
+            { env: "AGW_HOME", description: "AGW home directory for local session state." },
+            { env: "AGW_CHAIN_ID", description: "Default chain id for wallet reads." },
+            { env: "AGW_RPC_URL", description: "Optional RPC URL override for wallet reads." },
+          ),
         }),
       ],
     }),

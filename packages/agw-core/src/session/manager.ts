@@ -10,7 +10,7 @@ import { isWriteReadySession, resolveSessionReadiness, type AgwSessionData, type
 export type SessionManagerReadiness = SessionReadiness | "missing" | "revoked";
 
 export interface SessionManagerOptions {
-  storageDir?: string;
+  homeDir?: string;
   chainId?: number;
   rpcUrl?: string;
   appUrl?: string;
@@ -28,7 +28,7 @@ export class SessionManager {
 
   constructor(logger: Logger, options: SessionManagerOptions = {}) {
     this.logger = logger.child("session");
-    this.storage = new SessionStorage(options.storageDir);
+    this.storage = new SessionStorage(options.homeDir);
     this.chainId = options.chainId ?? DEFAULT_CHAIN_ID;
     this.rpcUrl = options.rpcUrl;
     this.appUrl = resolveAppUrl({ appUrl: options.appUrl });
