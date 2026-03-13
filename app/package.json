@@ -9,8 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "check-types": "tsc --noEmit",
-    "test": "vitest run",
-    "refresh:app-registry": "node scripts/refresh-app-registry.mjs"
+    "test": "vitest run"
   },
   "engines": {
     "node": ">=20.0.0"

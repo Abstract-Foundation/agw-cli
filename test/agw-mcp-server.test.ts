@@ -17,8 +17,10 @@ describe("generated agw mcp exposure", () => {
     expect(commands).toContain("wallet.balances");
     expect(commands).toContain("tx.send");
     expect(commands).toContain("contract.write");
-    expect(commands).toContain("portal.apps.list");
-    expect(commands).not.toContain("app.show");
+    expect(commands).toContain("app.list");
+    expect(commands).toContain("app.show");
+    expect(commands).not.toContain("portal.apps.list");
+    expect(commands).not.toContain("portal.apps.get");
     expect(commands).not.toContain("mcp.serve");
   });
 

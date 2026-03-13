@@ -45,6 +45,12 @@ function createActiveSession(storageDir: string): void {
 }
 
 describe("agw runtime", () => {
+  const originalFetch = global.fetch;
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
   it("parses json input from inline payloads", () => {
     expect(parseJsonInput('{"status":"ok"}')).toEqual({ status: "ok" });
   });
@@ -147,6 +153,29 @@ describe("agw runtime", () => {
   });
 
   it("pages through list commands when pageAll is enabled and defaults paginated non-tty reads to ndjson", async () => {
+    global.fetch = jest
+      .fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        const page = new URL(url).searchParams.get("page");
+        if (page === "1") {
+          return new Response(
+            JSON.stringify({
+              items: [{ id: "136", name: "Gacha" }],
+              pagination: { page: 1, limit: 1, totalItems: 2, totalPages: 2 },
+            }),
+            { status: 200 },
+          );
+        }
+
+        return new Response(
+          JSON.stringify({
+            items: [{ id: "183", name: "Aborean Finance" }],
+            pagination: { page: 2, limit: 1, totalItems: 2, totalPages: 2 },
+          }),
+          { status: 200 },
+        );
+      }) as unknown as typeof fetch;
+
     await expect(
       executeCommand(
         "app.list",
@@ -312,6 +341,15 @@ describe("agw runtime", () => {
   });
 
   it("defaults pagination-aware pageAll reads to ndjson when stdout is not a tty", async () => {
+    global.fetch = jest.fn(async () =>
+      new Response(
+        JSON.stringify({
+          items: [{ id: "136", name: "Gacha" }],
+          pagination: { page: 1, limit: 1, totalItems: 1, totalPages: 1 },
+        }),
+        { status: 200 },
+      )) as unknown as typeof fetch;
+
     await expect(
       executeCommand(
         "app.list",

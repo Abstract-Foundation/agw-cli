@@ -67,13 +67,18 @@ describe("shared command registry", () => {
   });
 
   it("marks large list surfaces as pagination-aware", () => {
-    const portalApps = getCommandDefinition("portal.apps.list");
+    const appList = getCommandDefinition("app.list");
 
-    expect(portalApps).toBeDefined();
-    expect(portalApps?.output.defaultMode).toBe("ndjson");
-    expect(portalApps?.output.supportsPagination).toBe(true);
-    expect(portalApps?.output.supportsPageAll).toBe(true);
-    expect(portalApps?.output.supportsFieldSelection).toBe(true);
+    expect(appList).toBeDefined();
+    expect(appList?.output.defaultMode).toBe("ndjson");
+    expect(appList?.output.supportsPagination).toBe(true);
+    expect(appList?.output.supportsPageAll).toBe(true);
+    expect(appList?.output.supportsFieldSelection).toBe(true);
+  });
+
+  it("removes raw Portal app discovery commands from the public registry", () => {
+    expect(getCommandDefinition("portal.apps.list")).toBeUndefined();
+    expect(getCommandDefinition("portal.apps.get")).toBeUndefined();
   });
 
   it("keeps registry metadata internally consistent", () => {
