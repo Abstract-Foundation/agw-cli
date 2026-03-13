@@ -1,0 +1,4 @@
+interface:
+  display_name: "AGW Wallet Reads"
+  short_description: "Read AGW wallet balances and tokens"
+  default_prompt: "Use $agw-wallet-reads to inspect the linked wallet, balances, and token inventory without over-fetching."

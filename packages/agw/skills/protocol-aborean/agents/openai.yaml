@@ -1,0 +1,4 @@
+interface:
+  display_name: "Aborean Protocol"
+  short_description: "Discover Aborean pools and entrypoints"
+  default_prompt: "Use $protocol-aborean to inspect Aborean app 183 metadata, discover pools, inspect verified Abscan entrypoints, and build a safe Aborean protocol workflow."

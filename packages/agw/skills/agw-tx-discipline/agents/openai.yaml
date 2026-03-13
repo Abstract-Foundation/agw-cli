@@ -1,0 +1,4 @@
+interface:
+  display_name: "AGW Transaction Discipline"
+  short_description: "Preview-first AGW signing and writes"
+  default_prompt: "Use $agw-tx-discipline to preview or execute AGW signing and write actions with explicit confirmation."

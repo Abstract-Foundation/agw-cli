@@ -1,0 +1,4 @@
+interface:
+  display_name: "AGW Auth And Session"
+  short_description: "Bootstrap and inspect AGW session state"
+  default_prompt: "Use $agw-auth-session to check readiness, bootstrap a session, or revoke signer access safely."
