@@ -14,7 +14,7 @@
     "url": "https://github.com/Abstract-Foundation/agw-mcp/issues"
   },
   "bin": {
-    "agw": "./dist/index.js"
+    "agw": "./dist/index.mjs"
   },
   "files": [
     "dist/",
@@ -31,7 +31,7 @@
     "build": "tsdown --config tsdown.config.ts",
     "check-types": "tsc -p tsconfig.json --noEmit",
     "dev": "tsx src/index.ts",
-    "start": "node dist/index.js",
+    "start": "node dist/index.mjs",
     "prepublishOnly": "pnpm check-types && pnpm lint && pnpm test && pnpm build"
   },
   "dependencies": {

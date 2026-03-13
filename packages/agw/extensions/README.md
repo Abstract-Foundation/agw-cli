@@ -4,8 +4,8 @@ This directory contains packaging assets for agent hosts that can load AGW as a 
 
 ## Included Targets
 
-- `gemini/`: Gemini extension guidance
 - `claude-code/`: Claude Code MCP config scaffold
+- `gemini/`: Gemini extension guidance
 
 Both surfaces assume the `agw` binary is installed and available on `PATH`.
 
@@ -32,3 +32,9 @@ Keep the extension host focused on the MCP surface:
 ```bash
 agw mcp serve --sanitize strict
 ```
+
+## Agent-Friendly Onboarding
+
+Ship setup instructions that an LLM can follow directly:
+
+- `../../docs/guide/installation.md`: canonical install, MCP wiring, AGW auth bootstrap, and verification flow for AI agents

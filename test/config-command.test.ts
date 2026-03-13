@@ -4,7 +4,7 @@ describe("config helper command", () => {
   it("builds a valid MCP config snippet", () => {
     const snippet = buildMcpConfigSnippet({
       command: "node",
-      args: ["/tmp/agw/dist/index.js", "mcp", "serve"],
+      args: ["/tmp/agw/dist/index.mjs", "mcp", "serve"],
       serverName: "agw-local",
     });
 
@@ -12,7 +12,7 @@ describe("config helper command", () => {
       mcpServers: {
         "agw-local": {
           command: "node",
-          args: ["/tmp/agw/dist/index.js", "mcp", "serve"],
+          args: ["/tmp/agw/dist/index.mjs", "mcp", "serve"],
         },
       },
     });

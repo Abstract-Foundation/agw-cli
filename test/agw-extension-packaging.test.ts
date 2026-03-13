@@ -6,9 +6,11 @@ describe("agw extension packaging", () => {
   it("ships Gemini extension descriptors", () => {
     const descriptorPath = path.join(process.cwd(), "packages/agw/extensions/gemini/gemini-extension.json");
     const contextPath = path.join(process.cwd(), "packages/agw/extensions/gemini/GEMINI.md");
+    const installationGuidePath = path.join(process.cwd(), "docs/guide/installation.md");
 
     expect(fs.existsSync(descriptorPath)).toBe(true);
     expect(fs.existsSync(contextPath)).toBe(true);
+    expect(fs.existsSync(installationGuidePath)).toBe(true);
 
     const descriptor = JSON.parse(fs.readFileSync(descriptorPath, "utf8")) as {
       mcpServers?: Record<string, { command?: string; args?: string[] }>;

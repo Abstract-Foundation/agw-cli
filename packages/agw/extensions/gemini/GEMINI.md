@@ -19,7 +19,7 @@ Use AGW for Abstract Global Wallet workflows through a JSON-first CLI and genera
 - Session inspection: `session.status`, `session.doctor`
 - Wallet reads: `wallet.address`, `wallet.balances`, `wallet.tokens.list`
 - Preview-first writes: `tx.send`, `tx.calls`, `tx.transfer-token`, `contract.write`, `contract.deploy`
-- Discovery: `portal.*`, `app.list`, `app.show`
+- Discovery: `app.list`, `app.show`, `portal.streams.*`, `portal.user-profile.*`
 
 ## Example Flows
 

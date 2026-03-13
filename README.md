@@ -4,17 +4,19 @@
 
 # AGW CLI
 
-AGW is an agent-first CLI for Abstract Global Wallet workflows. The product surface is one JSON-first binary, `agw`, with runtime schema introspection, generated MCP exposure, a focused companion approval app, and shipped skills for agent guidance.
+AGW is an agent-first CLI for [Abstract Global Wallet](https://docs.abs.xyz/abstract-global-wallet/overview). 
 
-The repo follows Justin Poehnelt’s March 4, 2026 article, “You Need to Rewrite Your CLI for AI Agents”:
+It enables AI agents like [Claude](https://code.claude.com/docs/en/overview) to interact with your Abstract Global Wallet autonomously - viewing wallet balances, sending transactions, and interacting with apps deployed on [Abstract](https://abs.xyz/).
 
-- raw JSON payloads instead of sprawling flag matrices
-- machine-readable output by default
-- runtime schema discovery through `agw schema`
-- preview-first execution for risky actions
-- field-trimmed and paginated reads for context-window discipline
-- one shared core for CLI and MCP
-- shipped operational guidance through skills
+## Get Started
+
+Copy and paste this prompt to your LLM agent (Claude Code, OpenClaw, Codex, etc.):
+
+```text
+Install and configure the AGW CLI by following the instructions here (use curl to fetch this file, NOT WebFetch): https://raw.githubusercontent.com/Abstract-Foundation/agw-mcp/main/docs/guide/installation.md
+```
+
+Or, read the [installation guide](https://github.com/Abstract-Foundation/agw-mcp/blob/main/docs/guide/installation.md) directly.
 
 ## Repo Layout
 
