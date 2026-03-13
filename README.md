@@ -1,4 +1,8 @@
-# AGW
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Abstract-Foundation/agw-mcp/main/docs/assets/banner.png" alt="AGW CLI Banner" width="100%" />
+</p>
+
+# AGW CLI
 
 AGW is an agent-first CLI for Abstract Global Wallet workflows. The product surface is one JSON-first binary, `agw`, with runtime schema introspection, generated MCP exposure, a focused companion approval app, and shipped skills for agent guidance.
 
