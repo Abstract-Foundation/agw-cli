@@ -22,6 +22,10 @@ The Abstract Portal has an on-chain voting system where users spend ETH to upvot
 |---------|---------|
 | Mainnet | `0x3b50de27506f0a8c1f4122a1e6f470009a76ce2a` |
 
+## ABI Format
+
+The AGW CLI requires full JSON ABI objects, not human-readable strings. Every `abi` array element must be an object with `type`, `name`, `inputs`, `outputs`, and `stateMutability` fields.
+
 ## Task Map
 
 ### Check vote cost and current epoch
@@ -29,7 +33,7 @@ The Abstract Portal has an on-chain voting system where users spend ETH to upvot
 ```bash
 agw contract write --json '{
   "address": "0x3b50de27506f0a8c1f4122a1e6f470009a76ce2a",
-  "abi": ["function voteCost() view returns (uint96)"],
+  "abi": [{"type":"function","name":"voteCost","stateMutability":"view","inputs":[],"outputs":[{"name":"","type":"uint96"}]}],
   "functionName": "voteCost",
   "args": []
 }' --dry-run
@@ -38,7 +42,7 @@ agw contract write --json '{
 ```bash
 agw contract write --json '{
   "address": "0x3b50de27506f0a8c1f4122a1e6f470009a76ce2a",
-  "abi": ["function currentEpoch() view returns (uint256)"],
+  "abi": [{"type":"function","name":"currentEpoch","stateMutability":"view","inputs":[],"outputs":[{"name":"","type":"uint256"}]}],
   "functionName": "currentEpoch",
   "args": []
 }' --dry-run
@@ -49,7 +53,7 @@ agw contract write --json '{
 ```bash
 agw contract write --json '{
   "address": "0x3b50de27506f0a8c1f4122a1e6f470009a76ce2a",
-  "abi": ["function userVotesRemaining(address user) view returns (uint256)"],
+  "abi": [{"type":"function","name":"userVotesRemaining","stateMutability":"view","inputs":[{"name":"user","type":"address"}],"outputs":[{"name":"","type":"uint256"}]}],
   "functionName": "userVotesRemaining",
   "args": ["<YOUR_ADDRESS>"]
 }' --dry-run
@@ -62,7 +66,7 @@ Replace `<APP_ID>` with the Portal app ID (e.g., `25` for Onchain Heroes) and `<
 ```bash
 agw contract write --json '{
   "address": "0x3b50de27506f0a8c1f4122a1e6f470009a76ce2a",
-  "abi": ["function voteForApp(uint256 appId) payable"],
+  "abi": [{"type":"function","name":"voteForApp","stateMutability":"payable","inputs":[{"name":"appId","type":"uint256"}],"outputs":[]}],
   "functionName": "voteForApp",
   "args": ["<APP_ID>"],
   "value": "<VOTE_COST>"
@@ -76,7 +80,7 @@ Execute only after confirming the preview: replace `--dry-run` with `--execute`.
 ```bash
 agw contract write --json '{
   "address": "0x3b50de27506f0a8c1f4122a1e6f470009a76ce2a",
-  "abi": ["function getVotesForApp(uint256 appId, uint256 epoch) view returns (uint256)"],
+  "abi": [{"type":"function","name":"getVotesForApp","stateMutability":"view","inputs":[{"name":"appId","type":"uint256"},{"name":"epoch","type":"uint256"}],"outputs":[{"name":"","type":"uint256"}]}],
   "functionName": "getVotesForApp",
   "args": ["<APP_ID>", "<EPOCH>"]
 }' --dry-run
@@ -89,7 +93,7 @@ Use `currentEpoch()` to get the current epoch number first.
 ```bash
 agw contract write --json '{
   "address": "0x3b50de27506f0a8c1f4122a1e6f470009a76ce2a",
-  "abi": ["function getUserVotes(address user, uint256 epoch) view returns (uint256[])"],
+  "abi": [{"type":"function","name":"getUserVotes","stateMutability":"view","inputs":[{"name":"user","type":"address"},{"name":"epoch","type":"uint256"}],"outputs":[{"name":"","type":"uint256[]"}]}],
   "functionName": "getUserVotes",
   "args": ["<USER_ADDRESS>", "<EPOCH>"]
 }' --dry-run

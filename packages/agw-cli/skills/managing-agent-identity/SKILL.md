@@ -31,6 +31,10 @@ These are deterministic CREATE2 deployments — same addresses across all 20+ EV
 - **Reputation** is submitted by clients via `giveFeedback()` with a signed value, optional tags, and optional off-chain evidence.
 - **Validation Registry** is not yet deployed on Abstract.
 
+## ABI Format
+
+The AGW CLI requires full JSON ABI objects, not human-readable strings. Every `abi` array element must be an object with `type`, `name`, `inputs`, `outputs`, and `stateMutability` fields. Human-readable signatures in this skill and its references are for documentation — expand them to full JSON when constructing CLI commands.
+
 ## Task Map
 
 ### Read identity for a wallet
@@ -38,7 +42,7 @@ These are deterministic CREATE2 deployments — same addresses across all 20+ EV
 ```bash
 agw contract write --json '{
   "address": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
-  "abi": ["function balanceOf(address owner) view returns (uint256)"],
+  "abi": [{"type":"function","name":"balanceOf","stateMutability":"view","inputs":[{"name":"owner","type":"address"}],"outputs":[{"name":"","type":"uint256"}]}],
   "functionName": "balanceOf",
   "args": ["<WALLET_ADDRESS>"]
 }' --dry-run
@@ -51,7 +55,7 @@ If balance > 0, the wallet owns at least one agent identity. Use `tokenOfOwnerBy
 ```bash
 agw contract write --json '{
   "address": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
-  "abi": ["function register(string agentURI) returns (uint256 agentId)"],
+  "abi": [{"type":"function","name":"register","stateMutability":"nonpayable","inputs":[{"name":"agentURI","type":"string"}],"outputs":[{"name":"agentId","type":"uint256"}]}],
   "functionName": "register",
   "args": ["https://example.com/agent.json"]
 }' --dry-run
@@ -64,7 +68,7 @@ The returned `agentId` is the ERC-721 token ID. Execute only after user confirms
 ```bash
 agw contract write --json '{
   "address": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
-  "abi": ["function tokenURI(uint256 tokenId) view returns (string)"],
+  "abi": [{"type":"function","name":"tokenURI","stateMutability":"view","inputs":[{"name":"tokenId","type":"uint256"}],"outputs":[{"name":"","type":"string"}]}],
   "functionName": "tokenURI",
   "args": ["<AGENT_ID>"]
 }' --dry-run
@@ -77,7 +81,7 @@ Requires at least one client address to avoid Sybil attacks:
 ```bash
 agw contract write --json '{
   "address": "0x8004BAa17C55a88189AE136b182e5fdA19dE9b63",
-  "abi": ["function getSummary(uint256 agentId, address[] clientAddresses, string tag1, string tag2) view returns (uint64 count, int128 summaryValue, uint8 summaryValueDecimals)"],
+  "abi": [{"type":"function","name":"getSummary","stateMutability":"view","inputs":[{"name":"agentId","type":"uint256"},{"name":"clientAddresses","type":"address[]"},{"name":"tag1","type":"string"},{"name":"tag2","type":"string"}],"outputs":[{"name":"count","type":"uint64"},{"name":"summaryValue","type":"int128"},{"name":"summaryValueDecimals","type":"uint8"}]}],
   "functionName": "getSummary",
   "args": ["<AGENT_ID>", ["<CLIENT_ADDRESS_1>", "<CLIENT_ADDRESS_2>"], "", ""]
 }' --dry-run
@@ -92,7 +96,7 @@ The submitter cannot be the agent owner (prevents self-rating):
 ```bash
 agw contract write --json '{
   "address": "0x8004BAa17C55a88189AE136b182e5fdA19dE9b63",
-  "abi": ["function giveFeedback(uint256 agentId, int128 value, uint8 valueDecimals, string tag1, string tag2, string endpoint, string feedbackURI, bytes32 feedbackHash)"],
+  "abi": [{"type":"function","name":"giveFeedback","stateMutability":"nonpayable","inputs":[{"name":"agentId","type":"uint256"},{"name":"value","type":"int128"},{"name":"valueDecimals","type":"uint8"},{"name":"tag1","type":"string"},{"name":"tag2","type":"string"},{"name":"endpoint","type":"string"},{"name":"feedbackURI","type":"string"},{"name":"feedbackHash","type":"bytes32"}],"outputs":[]}],
   "functionName": "giveFeedback",
   "args": ["<AGENT_ID>", "100", "0", "quality", "", "", "", "0x0000000000000000000000000000000000000000000000000000000000000000"]
 }' --dry-run

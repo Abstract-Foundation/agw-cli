@@ -7,6 +7,10 @@ description: Compose AGW wallet and contract commands for token swaps, price quo
 
 Uniswap V2 and V3 are both deployed on Abstract mainnet and testnet. This skill covers swaps, quotes, and basic LP operations using AGW CLI commands.
 
+## ABI Format
+
+The AGW CLI requires full JSON ABI objects, not human-readable strings. Every `abi` array element must be an object with `type`, `name`, `inputs`, `outputs`, and `stateMutability` fields. Human-readable signatures in the references are for documentation — expand them to full JSON when constructing CLI commands.
+
 ## Operating Rules
 
 - Check wallet balances with `agw wallet balances` or `agw wallet tokens list` before proposing any swap that depends on holdings.
