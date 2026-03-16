@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { getSmartAccountAddressFromInitialSigner, isAGWAccount } from '@abstract-foundation/agw-client';
 import { usePrivy } from '@privy-io/react-auth';
 import { createPublicClient, http, type Address } from 'viem';
-import { resolveChain, isSupportedChainId } from '@/lib/chains';
+import { resolveChain, isSupportedChainId, type SupportedChainId } from '@/lib/chains';
 import useSessionWizardStore from '@/stores/useSessionWizardStore';
 
 export function useSessionWizardState() {
@@ -26,6 +26,8 @@ export function useSessionWizardState() {
   const provisionedSigner = useSessionWizardStore(state => state.provisionedSigner);
   const existingSigners = useSessionWizardStore(state => state.existingSigners);
 
+  const resolutionAttempt = useSessionWizardStore(state => state.resolutionAttempt);
+  const markResolving = useSessionWizardStore(state => state.markResolving);
   const syncConnection = useSessionWizardStore(state => state.syncConnection);
   const setDangerAcknowledged = useSessionWizardStore(state => state.setDangerAcknowledged);
   const setValidationError = useSessionWizardStore(state => state.setValidationError);
@@ -33,52 +35,64 @@ export function useSessionWizardState() {
   const backToPolicySelection = useSessionWizardStore(state => state.backToPolicySelection);
   const markCreationSuccess = useSessionWizardStore(state => state.markCreationSuccess);
   const markCreationError = useSessionWizardStore(state => state.markCreationError);
+  const retryResolution = useSessionWizardStore(state => state.retryResolution);
+
+  const validChainId = chainId && isSupportedChainId(chainId) ? chainId : null;
+
+  const publicClient = useMemo(() => {
+    if (!validChainId) return null;
+    return createPublicClient({
+      chain: resolveChain(validChainId as SupportedChainId),
+      transport: http(),
+    });
+  }, [validChainId]);
 
   useEffect(() => {
+    if (!ready) return;
+
+    if (!authenticated) {
+      syncConnection({ isConnected: false, agwAddress: null, signerAddress: null });
+      return;
+    }
+
+    if (!signerAddress || !validChainId || !publicClient) {
+      markResolving();
+      return;
+    }
+
     let cancelled = false;
+    markResolving();
 
     void (async () => {
-      if (!ready || !authenticated || !user || !signerAddress || !chainId || !isSupportedChainId(chainId)) {
-        syncConnection({
-          isConnected: false,
-          agwAddress: null,
-          signerAddress: null,
-        });
-        return;
-      }
-
       try {
-        const publicClient = createPublicClient({
-          chain: resolveChain(chainId),
-          transport: http(),
-        });
-
         const derivedAgwAddress = await getSmartAccountAddressFromInitialSigner(signerAddress, publicClient);
         const agwRegistered = await isAGWAccount(publicClient, derivedAgwAddress);
-        if (cancelled) {
+        if (cancelled) return;
+
+        if (!agwRegistered) {
+          markCreationError(
+            `No Abstract Global Wallet found for signer ${signerAddress}. ` +
+            'Create an AGW at abs.xyz before running this flow.',
+          );
           return;
         }
+
         syncConnection({
-          isConnected: agwRegistered,
-          agwAddress: (agwRegistered ? derivedAgwAddress : null) as Address | null,
+          isConnected: true,
+          agwAddress: derivedAgwAddress as Address,
           signerAddress,
         });
-      } catch (error) {
-        if (!cancelled) {
-          console.error('Failed to resolve AGW account from signer', error);
-          syncConnection({
-            isConnected: false,
-            agwAddress: null,
-            signerAddress: null,
-          });
-        }
+      } catch (err) {
+        if (cancelled) return;
+        console.error('Failed to resolve AGW account from signer', err);
+        markCreationError(
+          `Failed to verify AGW on-chain: ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     })();
 
-    return () => {
-      cancelled = true;
-    };
-  }, [ready, authenticated, user, signerAddress, chainId, syncConnection]);
+    return () => { cancelled = true; };
+  }, [ready, authenticated, signerAddress, validChainId, publicClient, resolutionAttempt, markResolving, syncConnection, markCreationError]);
 
   return {
     currentStep,
@@ -96,6 +110,7 @@ export function useSessionWizardState() {
     backToPolicySelection,
     markCreationSuccess,
     markCreationError,
+    retryResolution,
     isConnected: Boolean(ready && authenticated && agwAddress && storedSignerAddress),
   };
 }

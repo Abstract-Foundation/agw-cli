@@ -36,12 +36,17 @@ function resolveRedirectPath(candidate: string | null): string {
 export default function EmbeddedLoginCard() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { ready, authenticated } = usePrivy();
+  const { ready, authenticated, user } = usePrivy();
   const { login } = useLogin();
   const { sendCode, loginWithCode } = useLoginWithEmail();
   const { initOAuth, loading: oauthLoading } = useLoginWithOAuth();
   const { loginWithPasskey } = useLoginWithPasskey();
   const gradientInputRef = useRef<HTMLInputElement>(null);
+
+  const privyWallet = user?.linkedAccounts
+    .filter(account => account.type === 'wallet')
+    .find(account => account.walletClientType === 'privy');
+  const walletReady = Boolean(privyWallet?.address);
 
   const redirectPath = useMemo(
     () => resolveRedirectPath(searchParams.get('redirect')),
@@ -55,10 +60,10 @@ export default function EmbeddedLoginCard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (ready && authenticated) {
+    if (ready && authenticated && walletReady) {
       router.replace(redirectPath);
     }
-  }, [ready, authenticated, redirectPath, router]);
+  }, [ready, authenticated, walletReady, redirectPath, router]);
 
   const handleSendCode = useCallback(
     async (event?: React.FormEvent) => {
@@ -141,7 +146,7 @@ export default function EmbeddedLoginCard() {
     }
   }, [loginWithPasskey]);
 
-  const showLoading = !ready || isProcessing || oauthLoading;
+  const showLoading = !ready || isProcessing || oauthLoading || (authenticated && !walletReady);
 
   const handleEmailKeyPress = useCallback(
     (event: React.KeyboardEvent<HTMLInputElement>) => {

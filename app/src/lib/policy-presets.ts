@@ -1,3 +1,4 @@
+import { DEFAULT_POLICY_EXPIRY_SECONDS, DEFAULT_POLICY_FEE_LIMIT, DEFAULT_POLICY_MAX_VALUE_PER_USE } from './config';
 import type {
   BuiltInSessionPolicyPresetId,
   CustomPolicyPresetDescriptor,
@@ -187,9 +188,9 @@ export const BUILT_IN_POLICY_PRESETS: Readonly<
     riskHint: 'critical',
     requiresDangerAcknowledgement: true,
     defaultLimits: {
-      expiresInSeconds: 60 * 60,
-      feeLimit: '4000000000000000',
-      maxValuePerUse: '10000000000000000',
+      expiresInSeconds: DEFAULT_POLICY_EXPIRY_SECONDS,
+      feeLimit: DEFAULT_POLICY_FEE_LIMIT,
+      maxValuePerUse: DEFAULT_POLICY_MAX_VALUE_PER_USE,
     },
     enabledTools: ALL_SESSION_TOOLS,
   },

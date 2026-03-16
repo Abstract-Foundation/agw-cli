@@ -1,9 +1,11 @@
 import { APP_REGISTRY, getRegistryAppById, type AppRegistryEntry } from './app-registry';
+import { DEFAULT_POLICY_EXPIRY_SECONDS, DEFAULT_POLICY_FEE_LIMIT, DEFAULT_POLICY_MAX_VALUE_PER_USE } from './config';
 import {
   BUILT_IN_POLICY_PRESETS,
   CUSTOM_PRESET,
   ALL_SESSION_TOOLS,
 } from './policy-presets';
+import { DEFAULT_ENABLED_TOOLS } from './server/default-policy';
 import type {
   BuiltInSessionPolicyPresetId,
   GuidedSessionPolicyDraft,
@@ -286,29 +288,16 @@ export function toPolicyPreview(
 
 export function buildDefaultPolicyPreview(nowUnixSeconds = Math.floor(Date.now() / 1000)): PolicyPreview {
   const preset = BUILT_IN_POLICY_PRESETS.full_app_control;
-  const enabledTools = [
-    'get_wallet_address',
-    'get_balances',
-    'get_token_list',
-    'get_session_status',
-    'preview_transaction',
-    'sign_transaction',
-    'send_transaction',
-    'send_calls',
-    'write_contract',
-    'deploy_contract',
-    'revoke_session',
-  ] as SessionToolName[];
 
   return {
     presetId: preset.id,
     label: preset.label,
     description: preset.description,
     policyPayload: {
-      expiresAt: nowUnixSeconds + preset.defaultLimits.expiresInSeconds,
+      expiresAt: nowUnixSeconds + DEFAULT_POLICY_EXPIRY_SECONDS,
       sessionConfig: {
-        feeLimit: preset.defaultLimits.feeLimit,
-        maxValuePerUse: preset.defaultLimits.maxValuePerUse,
+        feeLimit: DEFAULT_POLICY_FEE_LIMIT,
+        maxValuePerUse: DEFAULT_POLICY_MAX_VALUE_PER_USE,
         callPolicies: [],
         transferPolicies: [],
       },
@@ -317,7 +306,7 @@ export function buildDefaultPolicyPreview(nowUnixSeconds = Math.floor(Date.now()
         mode: 'guided',
         presetId: preset.id,
         presetLabel: 'AGW MCP Default',
-        enabledTools,
+        enabledTools: [...DEFAULT_ENABLED_TOOLS],
         selectedAppIds: [],
         selectedContractAddresses: [],
         unverifiedAppIds: [],

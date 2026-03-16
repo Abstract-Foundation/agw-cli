@@ -2,7 +2,7 @@ import { DEFAULT_POLICY_EXPIRY_SECONDS, DEFAULT_POLICY_FEE_LIMIT, DEFAULT_POLICY
 import type { DelegatedCapabilitySummary } from '../session-config';
 import type { SessionPolicyMeta, SessionToolName } from '../policy-types';
 
-const DEFAULT_ENABLED_TOOLS: SessionToolName[] = [
+export const DEFAULT_ENABLED_TOOLS: SessionToolName[] = [
   'get_wallet_address',
   'get_balances',
   'get_token_list',
