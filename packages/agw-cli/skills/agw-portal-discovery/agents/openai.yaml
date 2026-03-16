@@ -1,4 +1,0 @@
-interface:
-  display_name: "AGW Portal Discovery"
-  short_description: "Discover AGW apps, streams, and profiles"
-  default_prompt: "Use $agw-portal-discovery to inspect app metadata, related skills, or Portal content safely."

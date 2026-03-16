@@ -1,5 +1,5 @@
 ---
-name: agw-auth-session
+name: authenticating-with-agw
 description: Bootstrap, inspect, troubleshoot, and revoke AGW sessions through the companion approval flow. Use when a user needs to connect this machine to an AGW wallet, check session readiness, diagnose missing signer or delegated-access issues, inspect local session state, or explicitly revoke access. Trigger for requests mentioning `agw auth init`, `agw session status`, `agw session doctor`, onboarding, companion approval, or session revoke.
 ---
 

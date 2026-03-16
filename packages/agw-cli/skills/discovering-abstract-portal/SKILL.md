@@ -1,5 +1,5 @@
 ---
-name: agw-portal-discovery
+name: discovering-abstract-portal
 description: Discover shipped AGW apps, related skills, Portal apps, streams, and user profiles with pagination and field trimming. Use when a user asks what apps are available, which skills map to an app, how to inspect app metadata, how to browse Portal streams, or how to fetch a Portal profile safely. Trigger for requests mentioning `agw app list`, `agw app show`, `agw portal apps list`, `agw portal streams list`, or `agw portal user-profile get`.
 ---
 
@@ -27,4 +27,4 @@ Use shipped AGW app surfaces first, then reach for live Portal reads.
 
 ## Escalation
 
-- Switch to `agw-auth-session` when a live Portal read fails because the local session is missing or inactive.
+- Switch to `authenticating-with-agw` when a live Portal read fails because the local session is missing or inactive.

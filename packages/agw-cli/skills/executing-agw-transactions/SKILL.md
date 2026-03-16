@@ -1,5 +1,5 @@
 ---
-name: agw-tx-discipline
+name: executing-agw-transactions
 description: Apply preview-first execution rules to AGW signing, sends, batched calls, token transfers, contract writes, and deployments. Use when a user wants to sign data, simulate a transaction, broadcast a transaction, transfer tokens, write a contract, deploy a contract, or build one of those payloads safely. Trigger for requests mentioning `agw tx`, `agw contract`, signing, dry-run, execute, preview, transfer, contract write, or deployment.
 ---
 

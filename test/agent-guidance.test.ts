@@ -17,8 +17,8 @@ describe("shipped agent guidance", () => {
   });
 
   it("keeps first-party skills aligned with dry-run/execute guidance", () => {
-    const authSkill = read("packages/agw-cli/skills/agw-auth-session/SKILL.md");
-    const txSkill = read("packages/agw-cli/skills/agw-tx-discipline/SKILL.md");
+    const authSkill = read("packages/agw-cli/skills/authenticating-with-agw/SKILL.md");
+    const txSkill = read("packages/agw-cli/skills/executing-agw-transactions/SKILL.md");
 
     expect(authSkill).toContain("--dry-run");
     expect(authSkill).toContain("--execute");

@@ -1,5 +1,5 @@
 ---
-name: agw-wallet-reads
+name: reading-agw-wallet
 description: Read AGW wallet identity, balances, and token inventory with field trimming and pagination. Use when a user wants to know which wallet is linked, inspect balances, list tokens, confirm the current account before another workflow, or gather read-only wallet context without blowing the context window. Trigger for requests mentioning `agw wallet address`, `agw wallet balances`, `agw wallet tokens list`, portfolio inspection, token inventory, or linked wallet identity.
 ---
 
@@ -26,4 +26,4 @@ Use read-only wallet commands to establish account context before higher-risk ac
 
 ## Escalation
 
-- Switch to `agw-auth-session` when the wallet is not linked because the local session is missing or inactive.
+- Switch to `authenticating-with-agw` when the wallet is not linked because the local session is missing or inactive.

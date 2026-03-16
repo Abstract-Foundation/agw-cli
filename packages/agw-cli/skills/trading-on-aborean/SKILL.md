@@ -1,5 +1,5 @@
 ---
-name: protocol-aborean
+name: trading-on-aborean
 description: Compose AGW wallet, Portal, transaction, and contract commands for current Aborean Finance workflows on Abstract. Use when a user wants to inspect Aborean app 183 metadata, discover live Aborean contracts, identify liquidity pools, inspect verified contract entrypoints, or safely prepare swaps, LP deposits, zaps, veABX locks, gauge votes, vault actions, fees, bribes, emissions, or claims. Trigger for requests mentioning Aborean, app 183, DexScreener, Abscan, veABX, locks, voting, gauges, vaults, emissions, bribes, fees, liquidity, zaps, LP positions, or AGW actions tied to the Aborean protocol.
 ---
 
@@ -26,7 +26,7 @@ Use this skill to keep Aborean-specific discovery and flow selection outside the
 - Prefer the live `app.show` result over remembered contract lists.
 - Use `agw app show --json '{"appId":"183","offline":true}'` only when you intentionally want the small shipped catalog view for comparison or fallback.
 - Preview every allowance, lock, vote, claim, transfer, deposit, withdrawal, or contract write before execution.
-- Route generic session, wallet, and transaction safety questions back to `agw-auth-session`, `agw-wallet-reads`, and `agw-tx-discipline`.
+- Route generic session, wallet, and transaction safety questions back to `authenticating-with-agw`, `reading-agw-wallet`, and `executing-agw-transactions`.
 - Read [references/discovery-and-entrypoints.md](./references/discovery-and-entrypoints.md) when the task needs pool discovery, function signatures, or concrete LP and zap entrypoints.
 
 ## Contract Index

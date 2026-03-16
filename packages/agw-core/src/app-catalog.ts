@@ -24,34 +24,34 @@ export interface AgwAppCatalogEntry {
 
 export const skillCatalog: readonly AgwSkillRef[] = [
   {
-    id: "agw-auth-session",
-    title: "AGW Auth And Session",
+    id: "authenticating-with-agw",
+    title: "Authenticating with AGW",
     description: "Bootstrap, inspect, and revoke AGW sessions using explicit approval and narrow field selection.",
-    installPath: "skills/agw-auth-session",
+    installPath: "skills/authenticating-with-agw",
   },
   {
-    id: "agw-wallet-reads",
-    title: "AGW Wallet Reads",
+    id: "reading-agw-wallet",
+    title: "Reading AGW Wallet",
     description: "Use wallet and session reads with field trimming and pagination to stay within agent context budgets.",
-    installPath: "skills/agw-wallet-reads",
+    installPath: "skills/reading-agw-wallet",
   },
   {
-    id: "agw-tx-discipline",
-    title: "AGW Transaction Discipline",
+    id: "executing-agw-transactions",
+    title: "Executing AGW Transactions",
     description: "Preview-first rules for signing, sends, transfers, contract writes, and deployments.",
-    installPath: "skills/agw-tx-discipline",
+    installPath: "skills/executing-agw-transactions",
   },
   {
-    id: "agw-portal-discovery",
-    title: "AGW Portal Discovery",
+    id: "discovering-abstract-portal",
+    title: "Discovering Abstract Portal",
     description: "Find apps, streams, and user profiles through Portal with response shaping for agent-safe reads.",
-    installPath: "skills/agw-portal-discovery",
+    installPath: "skills/discovering-abstract-portal",
   },
   {
-    id: "protocol-aborean",
-    title: "Aborean Protocol",
+    id: "trading-on-aborean",
+    title: "Trading on Aborean",
     description: "Compose AGW core commands for Aborean Finance workflows without baking protocol logic into the CLI core.",
-    installPath: "skills/protocol-aborean",
+    installPath: "skills/trading-on-aborean",
   },
 ];
 
@@ -64,7 +64,7 @@ export const appCatalog: readonly AgwAppCatalogEntry[] = [
     verified: true,
     description: "Onchain gacha mechanics and ticket purchase flows.",
     docsUrl: "https://gacha.gitbook.io/gacha",
-    skillRefs: ["agw-portal-discovery", "agw-tx-discipline"],
+    skillRefs: ["discovering-abstract-portal", "executing-agw-transactions"],
     contracts: [
       { address: "0x3272596F776470D2D7C3f7dfF3dc50888b7D8967", label: "Gacha" },
       { address: "0xe6765C9cb1B42D3CC36Fcd3D2B4fc938db456EaD", label: "Batch purchase" },
@@ -78,7 +78,7 @@ export const appCatalog: readonly AgwAppCatalogEntry[] = [
     verified: true,
     description: "DeFi borrowing and collateral management flows on Abstract.",
     docsUrl: "https://aborean.finance",
-    skillRefs: ["protocol-aborean", "agw-tx-discipline", "agw-wallet-reads"],
+    skillRefs: ["trading-on-aborean", "executing-agw-transactions", "reading-agw-wallet"],
     contracts: [
       { address: "0xC0F53703e9f4b79fA2FB09a2aeBA487FA97729c9", label: "Market" },
       { address: "0x4d8971D9932C1c0c16079722b3D93893F16Bb065", label: "Comptroller" },
