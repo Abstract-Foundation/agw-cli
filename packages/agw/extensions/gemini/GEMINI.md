@@ -33,7 +33,7 @@ Stream a paginated read:
 
 ```bash
 agw wallet tokens list \
-  --json '{"pageSize":25,"fields":["items.token.symbol","items.balance","nextCursor"]}' \
+  --json '{"pageSize":25,"fields":["items.symbol","items.value","nextCursor"]}' \
   --page-all \
   --output ndjson
 ```

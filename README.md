@@ -33,7 +33,7 @@ pnpm dev session status --json '{"fields":["status","readiness","accountAddress"
 pnpm dev auth init --json '{"chainId":2741}' --dry-run
 pnpm dev tx send --json '{"to":"0x...","data":"0x1234","value":"0"}' --dry-run
 pnpm dev tx send --json '{"to":"0x...","data":"0x1234","value":"0"}' --execute
-pnpm dev wallet tokens list --json '{"pageSize":25,"fields":["items.token.symbol","items.balance","nextCursor"]}' --page-all --output ndjson
+pnpm dev wallet tokens list --json '{"pageSize":25,"fields":["items.symbol","items.value","nextCursor"]}' --page-all --output ndjson
 pnpm dev mcp serve
 ```
 

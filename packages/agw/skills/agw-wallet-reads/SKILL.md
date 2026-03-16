@@ -20,9 +20,9 @@ Use read-only wallet commands to establish account context before higher-risk ac
 ## Task Map
 
 - Read the linked account with `agw wallet address --json '{}'`.
-- Read balances with `agw wallet balances --json '{"fields":["accountAddress","chainId","balances"]}'`.
-- Read a page of tokens with `agw wallet tokens list --json '{"pageSize":25,"fields":["items.token.symbol","items.tokenAddress","items.balance","nextCursor"]}'`.
-- Stream the full inventory only when required with `agw wallet tokens list --json '{"pageSize":25,"fields":["items.token.symbol","items.tokenAddress","items.balance","nextCursor"]}' --page-all --output ndjson`.
+- Read balances with `agw wallet balances --json '{"fields":["accountAddress","chainId","nativeBalance"]}'`.
+- Read a page of tokens with `agw wallet tokens list --json '{"pageSize":25,"fields":["items.symbol","items.tokenAddress","items.value","nextCursor"]}'`.
+- Stream the full inventory only when required with `agw wallet tokens list --json '{"pageSize":25,"fields":["items.symbol","items.tokenAddress","items.value","nextCursor"]}' --page-all --output ndjson`.
 
 ## Escalation
 

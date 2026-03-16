@@ -141,6 +141,72 @@ describe("agw runtime", () => {
     });
   });
 
+  it("preserves wallet native balance fields when the public field path is requested", () => {
+    expect(
+      applyFieldSelection(
+        {
+          accountAddress: "0x1111111111111111111111111111111111111111",
+          chainId: 2741,
+          nativeBalance: {
+            symbol: "ETH",
+            decimals: 18,
+            amount: {
+              raw: "1000000000000000",
+              formatted: "0.001",
+            },
+          },
+          tokenBalances: [],
+        },
+        ["accountAddress", "chainId", "nativeBalance"],
+      ),
+    ).toEqual({
+      accountAddress: "0x1111111111111111111111111111111111111111",
+      chainId: 2741,
+      nativeBalance: {
+        symbol: "ETH",
+        decimals: 18,
+        amount: {
+          raw: "1000000000000000",
+          formatted: "0.001",
+        },
+      },
+    });
+  });
+
+  it("preserves wallet token list fields when the public item paths are requested", () => {
+    expect(
+      applyFieldSelection(
+        {
+          items: [
+            {
+              tokenAddress: "0x84a71ccd554cc1b02749b35d22f684cc8ec987e1",
+              symbol: "USDC.e",
+              decimals: 6,
+              value: {
+                raw: "3140000",
+                formatted: "3.14",
+              },
+            },
+          ],
+          nextCursor: null,
+        },
+        ["items.symbol", "items.tokenAddress", "items.value", "nextCursor"],
+      ),
+    ).toEqual({
+      items: [
+        {
+          tokenAddress: "0x84a71ccd554cc1b02749b35d22f684cc8ec987e1",
+          symbol: "USDC.e",
+          value: {
+            raw: "3140000",
+            formatted: "3.14",
+          },
+        },
+      ],
+      nextCursor: null,
+    });
+  });
+
   it("formats list-shaped outputs as ndjson", () => {
     expect(
       formatCommandOutput(
