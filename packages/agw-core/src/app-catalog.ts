@@ -65,6 +65,18 @@ export const skillCatalog: readonly AgwSkillRef[] = [
     description: "Register, inspect, and manage AI agent identity and reputation on Abstract via ERC-8004.",
     installPath: "skills/managing-agent-identity",
   },
+  {
+    id: "bridging-to-abstract",
+    title: "Bridging to Abstract",
+    description: "Guide users through bridging assets to/from Abstract via native bridge or third-party providers.",
+    installPath: "skills/bridging-to-abstract",
+  },
+  {
+    id: "building-on-abstract",
+    title: "Building on Abstract",
+    description: "Build, deploy, and integrate applications on Abstract with Foundry, Hardhat, AGW SDK, and paymasters.",
+    installPath: "skills/building-on-abstract",
+  },
 ];
 
 export const appCatalog: readonly AgwAppCatalogEntry[] = [
