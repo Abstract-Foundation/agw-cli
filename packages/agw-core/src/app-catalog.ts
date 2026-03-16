@@ -59,6 +59,12 @@ export const skillCatalog: readonly AgwSkillRef[] = [
     description: "Compose AGW contract commands for Uniswap V2 and V3 swaps, quotes, and liquidity on Abstract.",
     installPath: "skills/trading-on-uniswap",
   },
+  {
+    id: "managing-agent-identity",
+    title: "Managing Agent Identity",
+    description: "Register, inspect, and manage AI agent identity and reputation on Abstract via ERC-8004.",
+    installPath: "skills/managing-agent-identity",
+  },
 ];
 
 export const appCatalog: readonly AgwAppCatalogEntry[] = [
