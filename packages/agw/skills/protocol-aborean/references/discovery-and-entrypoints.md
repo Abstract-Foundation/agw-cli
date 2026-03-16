@@ -14,7 +14,15 @@ Use this reference when the task needs live pool discovery, verified function si
 
 ## Pool Discovery
 
-Use DexScreener first when the user asks to LP, zap, or trade a token without naming the exact pool.
+Use DexScreener for candidate discovery only when the user asks to LP, zap, or trade a token without naming the exact pool.
+
+If the user names an exact pair, do not start with DexScreener. Resolve the token addresses first and query the factory directly.
+
+Decision rule:
+
+- exact pair named: resolve token addresses and query `getPool` for both `stable=false` and `stable=true`
+- token-only or quote-asset-ambiguous request: use DexScreener to enumerate candidate pools
+- concentrated or `v3` request: identify the manager or NFT entrypoint before reasoning about execution
 
 Example searches:
 
@@ -24,7 +32,35 @@ curl -Ls 'https://api.dexscreener.com/latest/dex/search/?q=<token-symbol>%20WETH
 curl -Ls 'https://api.dexscreener.com/latest/dex/search/?q=<token-symbol>%20USDC.e%20aborean%20abstract' | jq '.pairs[:10] | map(select(.chainId=="abstract")) | map({dexId, labels, base:.baseToken.symbol, quote:.quoteToken.symbol, pairAddress})'
 ```
 
-Do not trust DexScreener alone for execution. Reconfirm the chosen pool onchain.
+Do not trust DexScreener alone for execution or exact-pair existence. A search miss is not proof that a pool does not exist. Reconfirm the chosen pool onchain.
+
+## Exact Pair Lookup
+
+For an exact pair, use the router to discover the default factory and then query both volatile and stable pool slots.
+
+Example: Aborean `WETH/USDC.e` on Abstract
+
+```bash
+ROUTER=0xE8142D2f82036B6FC1e79E4aE85cF53FBFfDC998
+FACTORY=$(cast call --rpc-url https://api.mainnet.abs.xyz $ROUTER 'defaultFactory()(address)')
+WETH=0x3439153EB7AF838Ad19d56E1571FBD09333C2809
+USDC_E=0x84a71ccd554cc1b02749b35d22f684cc8ec987e1
+
+cast call --rpc-url https://api.mainnet.abs.xyz $FACTORY 'getPool(address,address,bool)(address)' $WETH $USDC_E false
+cast call --rpc-url https://api.mainnet.abs.xyz $FACTORY 'getPool(address,address,bool)(address)' $WETH $USDC_E true
+```
+
+If one call returns a non-zero address, inspect that pool directly:
+
+```bash
+POOL=0x13058D2b9b7fC9E1A2418f11bcE30012BBf0436D
+cast call --rpc-url https://api.mainnet.abs.xyz $POOL 'token0()(address)'
+cast call --rpc-url https://api.mainnet.abs.xyz $POOL 'token1()(address)'
+cast call --rpc-url https://api.mainnet.abs.xyz $POOL 'stable()(bool)'
+cast call --rpc-url https://api.mainnet.abs.xyz $POOL 'getReserves()(uint256,uint256,uint256)'
+```
+
+Only say the exact pair is absent after the relevant `getPool` reads return zero addresses.
 
 ## Onchain Confirmation
 
@@ -110,6 +146,7 @@ Implications:
   - quote asset
   - `v2` versus `v3`
   - two-sided LP versus single-sided zap
+- If DexScreener does not show the expected exact pair, switch to factory lookup before telling the user the pair is unavailable.
 - A v2 path is easier to recover from verified router source.
 - A v3 path requires identifying the real manager or NFT entrypoint, not just the CL pool.
 

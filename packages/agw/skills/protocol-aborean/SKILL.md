@@ -19,7 +19,9 @@ Use this skill to keep Aborean-specific discovery and flow selection outside the
   - `https://aborean.finance/tokenomics`
   - `https://aborean.finance/emissions`
 - Use `agw wallet balances` or `agw wallet tokens list` before proposing any flow that depends on holdings.
-- Use DexScreener to discover candidate pools when the task involves trading, LPing, zaps, or pair selection.
+- If the user names an exact pair, resolve the canonical token addresses first and query the v2 factory with `getPool(tokenA, tokenB, false)` and `getPool(tokenA, tokenB, true)` before using any search surface.
+- Use DexScreener only to discover candidate pools when the task involves trading, LPing, zaps, or pair selection and the exact pair or pool family is still unknown.
+- Do not conclude that a pool does not exist from DexScreener search alone. Treat DexScreener as fuzzy discovery, not as the source of truth for exact-pair existence.
 - Use Abscan verified source to discover real entrypoints and struct shapes before building a `contract.write` payload.
 - Prefer the live `app.show` result over remembered contract lists.
 - Use `agw app show --json '{"appId":"183","offline":true}'` only when you intentionally want the small shipped catalog view for comparison or fallback.
@@ -77,7 +79,10 @@ Use the official docs and frontend to reason about the protocol:
    - single-sided zap
    - v3 or concentrated position management
    - veABX lock, vote, claim, or vault action
-3. If the task is market or LP related, use DexScreener to enumerate candidate Aborean pools and confirm whether the user means `v2` or `v3`, and which quote asset they want.
+3. Choose the discovery path:
+   - exact pair named: resolve token addresses, query `getPool(..., false)` and `getPool(..., true)`, then inspect the returned pool
+   - token-only or ambiguous LP request: use DexScreener to enumerate candidate pools, then narrow by quote asset and `v2` versus `v3`
+   - v3 or concentrated request: identify the manager or NFT path before reasoning about execution
 4. Use Abscan verified source to identify the actual router, pool, or manager entrypoint and the exact argument shape.
 5. Reconfirm the chosen pool onchain with `cast call` or equivalent reads before drafting the write.
 6. Preview the write with `agw contract write --json '{...}' --dry-run`.
@@ -91,6 +96,7 @@ Do not infer that "LP token X" implies one unique pool. Aborean can expose multi
 - Treat `v3` or concentrated-liquidity flows as a separate path. Do not assume the v2 router covers CL position creation or management.
 - If the user only has one side of a pair, check whether the router exposes a zap path before inventing a manual swap-plus-add flow.
 - If multiple Aborean pools exist for the same asset, stop and confirm the exact pool family with the user unless the request already implies one.
+- If DexScreener does not surface an exact pair, say that the search did not surface a candidate and move to onchain confirmation. Do not state that the pool is absent until factory reads return zero addresses for the relevant pool family.
 - Confirm deadlines, min amounts, and approvals from live reads or router quote helpers. Do not hardcode slippage or split ratios without a reason.
 
 ## Key Entry Points
@@ -109,7 +115,7 @@ See [references/discovery-and-entrypoints.md](./references/discovery-and-entrypo
 
 1. Load app metadata with `agw app show --json '{"appId":"183"}'`.
 2. Inspect `app.contracts` and, when label fidelity matters, compare against `live.app.contracts`.
-3. Confirm wallet context with `agw wallet balances --json '{"fields":["accountAddress","balances"]}'` or `agw wallet tokens list --json '{"pageSize":25,"fields":["items.token.symbol","items.tokenAddress","items.balance","nextCursor"]}'`.
+3. Confirm wallet context with `agw wallet balances --json '{"fields":["accountAddress","nativeBalance"]}'` or `agw wallet tokens list --json '{"pageSize":25,"fields":["items.symbol","items.tokenAddress","items.value","nextCursor"]}'`.
 4. Classify the request into one of the primary flows above using the official docs and, for market tasks, the discovery workflow in [references/discovery-and-entrypoints.md](./references/discovery-and-entrypoints.md).
 5. Inspect live Aborean streams with `agw portal streams list --json '{"appId":"183","pageSize":10,"fields":["items.id","items.title","nextCursor"]}'` only when the task depends on Portal content.
 6. Choose the target contract from the live AGW app metadata, then confirm the exact ABI plus function name in Abscan verified source.
