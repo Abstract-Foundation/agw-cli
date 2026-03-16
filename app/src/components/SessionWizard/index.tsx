@@ -2,6 +2,7 @@
 
 import type { Chain } from 'viem/chains';
 import { useSessionWizardState } from '@/hooks/useSessionWizardState';
+import type { SupportedChainId } from '@/lib/chains';
 import Creating from './steps/Creating';
 import ErrorStep from './steps/Error';
 import NotLoggedIn from './steps/NotLoggedIn';
@@ -17,7 +18,7 @@ export default function SessionWizard({
   chain: Chain;
   authPublicKey: string;
 }) {
-  const { currentStep } = useSessionWizardState();
+  const { currentStep } = useSessionWizardState(chain.id as SupportedChainId);
 
   switch (currentStep) {
     case 'not_logged_in':
