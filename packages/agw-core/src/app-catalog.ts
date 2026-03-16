@@ -53,6 +53,12 @@ export const skillCatalog: readonly AgwSkillRef[] = [
     description: "Compose AGW core commands for Aborean Finance workflows without baking protocol logic into the CLI core.",
     installPath: "skills/trading-on-aborean",
   },
+  {
+    id: "trading-on-uniswap",
+    title: "Trading on Uniswap",
+    description: "Compose AGW contract commands for Uniswap V2 and V3 swaps, quotes, and liquidity on Abstract.",
+    installPath: "skills/trading-on-uniswap",
+  },
 ];
 
 export const appCatalog: readonly AgwAppCatalogEntry[] = [
