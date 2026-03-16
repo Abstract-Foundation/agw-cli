@@ -13,6 +13,7 @@ export type SessionWizardStep =
 
 interface SessionWizardState {
   currentStep: SessionWizardStep;
+  chainId: number | null;
   agwAddress: string | null;
   signerAddress: string | null;
   dangerAcknowledged: boolean;
@@ -21,6 +22,7 @@ interface SessionWizardState {
   redirectUrl: string | null;
   provisionedSigner: ProvisionedSignerResult | null;
   existingSigners: ExistingAgwMcpSignerSummary[];
+  setChainId: (chainId: number) => void;
   syncConnection: (input: { isConnected: boolean; agwAddress: string | null; signerAddress: string | null }) => void;
   setDangerAcknowledged: (value: boolean) => void;
   setValidationError: (error: string | null) => void;
@@ -32,6 +34,7 @@ interface SessionWizardState {
 
 const useSessionWizardStore = create<SessionWizardState>(set => ({
   currentStep: 'not_logged_in',
+  chainId: null,
   agwAddress: null,
   signerAddress: null,
   dangerAcknowledged: false,
@@ -40,6 +43,7 @@ const useSessionWizardStore = create<SessionWizardState>(set => ({
   redirectUrl: null,
   provisionedSigner: null,
   existingSigners: [],
+  setChainId: chainId => set({ chainId }),
   syncConnection: ({ isConnected, agwAddress, signerAddress }) =>
     set(state => {
       if (!isConnected || !agwAddress || !signerAddress) {

@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { getSmartAccountAddressFromInitialSigner, isAGWAccount } from '@abstract-foundation/agw-client';
 import { usePrivy } from '@privy-io/react-auth';
 import { createPublicClient, http, type Address } from 'viem';
-import { abstractTestnet } from 'viem/chains';
+import { resolveChain, isSupportedChainId } from '@/lib/chains';
 import useSessionWizardStore from '@/stores/useSessionWizardStore';
 
 export function useSessionWizardState() {
@@ -16,6 +16,7 @@ export function useSessionWizardState() {
   const signerAddress = (privyWallet?.address ?? null) as `0x${string}` | null;
 
   const currentStep = useSessionWizardStore(state => state.currentStep);
+  const chainId = useSessionWizardStore(state => state.chainId);
   const agwAddress = useSessionWizardStore(state => state.agwAddress);
   const storedSignerAddress = useSessionWizardStore(state => state.signerAddress);
   const dangerAcknowledged = useSessionWizardStore(state => state.dangerAcknowledged);
@@ -37,7 +38,7 @@ export function useSessionWizardState() {
     let cancelled = false;
 
     void (async () => {
-      if (!ready || !authenticated || !user || !signerAddress) {
+      if (!ready || !authenticated || !user || !signerAddress || !chainId || !isSupportedChainId(chainId)) {
         syncConnection({
           isConnected: false,
           agwAddress: null,
@@ -48,7 +49,7 @@ export function useSessionWizardState() {
 
       try {
         const publicClient = createPublicClient({
-          chain: abstractTestnet,
+          chain: resolveChain(chainId),
           transport: http(),
         });
 
@@ -77,7 +78,7 @@ export function useSessionWizardState() {
     return () => {
       cancelled = true;
     };
-  }, [ready, authenticated, user, signerAddress, syncConnection]);
+  }, [ready, authenticated, user, signerAddress, chainId, syncConnection]);
 
   return {
     currentStep,
