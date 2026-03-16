@@ -83,6 +83,12 @@ export const skillCatalog: readonly AgwSkillRef[] = [
     description: "Vote for apps on the Abstract Portal using the on-chain AbstractVoting contract.",
     installPath: "skills/upvoting-on-abstract",
   },
+  {
+    id: "mining-with-bigcoin",
+    title: "Mining with Bigcoin",
+    description: "Interact with the Bigcoin virtual mining game — facilities, miners, rewards, and hashrate.",
+    installPath: "skills/mining-with-bigcoin",
+  },
 ];
 
 export const appCatalog: readonly AgwAppCatalogEntry[] = [
