@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { applyFieldSelection, executeCommand, formatCommandOutput, parseJsonInput } from "../packages/agw/src/runtime.js";
+import { applyFieldSelection, executeCommand, formatCommandOutput, parseJsonInput } from "../packages/agw-cli/src/runtime.js";
 import { sanitizeOutput } from "../packages/agw-core/src/execution/output.js";
 
 function createActiveSession(storageDir: string): void {

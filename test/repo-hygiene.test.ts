@@ -16,6 +16,6 @@ describe("repo hygiene", () => {
   });
 
   it("keeps package build output and duplicated extension skills out of the working tree", () => {
-    expect(pathExists("packages/agw/extensions/claude-code/skills")).toBe(false);
+    expect(pathExists("packages/agw-cli/extensions/claude-code/skills")).toBe(false);
   });
 });

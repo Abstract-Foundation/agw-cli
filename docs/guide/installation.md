@@ -1,6 +1,6 @@
 # Installation
 
-If you're an LLM Agent helping set up the agw cli, welcome! You'll now help your user to install the AGW CLI and configure it.
+If you're an LLM Agent helping set up the agw-cli, welcome! You'll now help your user to install the AGW CLI and configure it.
 
 Follow these steps:
 
@@ -15,16 +15,16 @@ If either is missing, install these dependencies using the best available packag
 
 ## Step 1: Install Or Upgrade AGW
 
-If `agw` is not installed (check with `command -v agw`, `which agw`, or `agw --version`), install it:
+If `agw-cli` is not installed (check with `command -v agw-cli`, `which agw-cli`, or `agw-cli --version`), install it:
 
 ```bash
-npm install -g @abstract-foundation/agw
+npm install -g @abstract-foundation/agw-cli
 ```
 
 Then verify:
 
 ```bash
-agw --version
+agw-cli --version
 ```
 
 If any command fails, do your best to fix the issue and continue before asking the user for help. If you are unable to continue, give the user clear instructions on how to unblock you before proceeding.
@@ -38,7 +38,7 @@ To complete the authentication flow for the user, execute the following steps:
 Run the following command to begin the authentication flow (this opens the user's browser, where they will be prompted to connect an existing AGW or create a new one, and then approve the request to create a new agent signer on their wallet and link it to this machine):
 
 ```bash
-agw auth init --json '{"chainId":2741}' --execute
+agw-cli auth init --json '{"chainId":2741}' --execute
 ```
 
 ## Step 3: Verify Successful Onboarding
@@ -46,17 +46,17 @@ agw auth init --json '{"chainId":2741}' --execute
 Once the user has completed the authentication flow inside the companion app, verify the session is active and ready:
 
 ```bash
-agw session doctor --json '{}'
+agw-cli session doctor --json '{}'
 ```
 
 ```bash
-agw session status --json '{"fields":["status","readiness","accountAddress","policyPreset"]}'
+agw-cli session status --json '{"fields":["status","readiness","accountAddress","policyPreset"]}'
 ```
 
 If the session is active and ready, confirm to the user the authentication flow was successful and the session is active and ready. Use the command below to get the user's profile to show them recognizable information like their username in your onboarding success message.
 
 ```bash
-agw portal user-profile get --json '{"address":"<your-account-address-here>"}'
+agw-cli portal user-profile get --json '{"address":"<your-account-address-here>"}'
 ```
 
 ## Step 4: Install AGW Agent Skills
@@ -66,5 +66,5 @@ The AGW repo ships agent Skills that teach the agent how to use the CLI safely a
 Install all AGW skills by default:
 
 ```bash
-npx skills add https://github.com/Abstract-Foundation/agw-mcp/tree/main/packages/agw/skills
+npx skills add https://github.com/Abstract-Foundation/agw-mcp/tree/main/packages/agw-cli/skills
 ```

@@ -1,5 +1,5 @@
 {
-  "name": "@abstract-foundation/agw",
+  "name": "@abstract-foundation/agw-cli",
   "version": "0.1.0",
   "type": "module",
   "description": "Agent-first CLI for Abstract Global Wallet workflows",
@@ -14,7 +14,7 @@
     "url": "https://github.com/Abstract-Foundation/agw-mcp/issues"
   },
   "bin": {
-    "agw": "./dist/index.mjs"
+    "agw-cli": "./dist/index.mjs"
   },
   "files": [
     "dist/",

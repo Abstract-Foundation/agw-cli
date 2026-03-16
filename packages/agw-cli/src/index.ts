@@ -143,15 +143,15 @@ function registerCommands(parent: Command, definitions: AgwCommandDefinition[]):
 async function main(): Promise<void> {
   const program = new Command();
   program
-    .name("agw")
+    .name("agw-cli")
     .description("Agent-first CLI for Abstract Global Wallet workflows.")
     .version("0.1.0")
     .showHelpAfterError();
 
   program
     .command("mcp-config")
-    .description("Print a ready-to-paste MCP config snippet for the agw binary.")
-    .option("--name <name>", "MCP server name override", "agw")
+    .description("Print a ready-to-paste MCP config snippet for the agw-cli binary.")
+    .option("--name <name>", "MCP server name override", "agw-cli")
     .option("--npx", "Output npx-based config for the published package")
     .option("--chain-id <chainId>", "Chain id to include in generated args")
     .action((options: { name: string; npx?: boolean; chainId?: string }) => {

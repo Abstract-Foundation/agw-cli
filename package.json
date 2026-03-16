@@ -19,11 +19,11 @@
     "node": ">=18"
   },
   "scripts": {
-    "build": "pnpm --dir packages/agw build && pnpm --dir app build",
-    "dev": "pnpm --dir packages/agw dev",
+    "build": "pnpm --dir packages/agw-cli build && pnpm --dir app build",
+    "dev": "pnpm --dir packages/agw-cli dev",
     "test": "jest",
     "test:e2e": "AGW_E2E_ENABLED=1 jest --runInBand test/e2e",
-    "check-types": "tsc -p tsconfig.json --noEmit && pnpm --dir packages/agw-core check-types && pnpm --dir packages/agw check-types && pnpm --dir app check-types",
+    "check-types": "tsc -p tsconfig.json --noEmit && pnpm --dir packages/agw-core check-types && pnpm --dir packages/agw-cli check-types && pnpm --dir app check-types",
     "lint": "eslint test packages --ext .ts",
     "prettier": "prettier --write \"packages/**/*.ts\" \"test/**/*.ts\""
   },

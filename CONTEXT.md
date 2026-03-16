@@ -4,7 +4,7 @@ AGW is an agent-first CLI for Abstract Global Wallet workflows. Treat the CLI as
 
 ## Rules
 
-- Use `agw schema <commandId>` whenever the request or response shape is unclear.
+- Use `agw-cli schema <commandId>` whenever the request or response shape is unclear.
 - Pass command input with `--json <payload|@file>`.
 - Keep runtime config out of JSON payloads. Use `AGW_*` env vars or CLI flags such as `--home`, `--chain-id`, `--rpc-url`, and `--app-url`.
 - Treat signing and state-changing commands as preview-first.
@@ -35,31 +35,31 @@ Public runtime config is:
 Inspect schema:
 
 ```bash
-agw schema tx.send
+agw-cli schema tx.send
 ```
 
 Inspect session state:
 
 ```bash
-agw session status --json '{"fields":["status","readiness","accountAddress"]}'
+agw-cli session status --json '{"fields":["status","readiness","accountAddress"]}'
 ```
 
 Preview a mutating action:
 
 ```bash
-agw tx send --json '{"to":"0x...","data":"0x1234","value":"0"}' --dry-run
+agw-cli tx send --json '{"to":"0x...","data":"0x1234","value":"0"}' --dry-run
 ```
 
 Execute after confirmation:
 
 ```bash
-agw tx send --json '{"to":"0x...","data":"0x1234","value":"0"}' --execute
+agw-cli tx send --json '{"to":"0x...","data":"0x1234","value":"0"}' --execute
 ```
 
 Stream a paginated read:
 
 ```bash
-agw wallet tokens list \
+agw-cli wallet tokens list \
   --json '{"pageSize":25,"fields":["items.symbol","items.value","nextCursor"]}' \
   --page-all \
   --output ndjson

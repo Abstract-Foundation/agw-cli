@@ -1,4 +1,4 @@
-import { buildMcpConfigSnippet } from "../packages/agw/src/config/mcp-config.js";
+import { buildMcpConfigSnippet } from "../packages/agw-cli/src/config/mcp-config.js";
 
 describe("config helper command", () => {
   it("builds a valid MCP config snippet", () => {
@@ -21,15 +21,15 @@ describe("config helper command", () => {
   it("builds a strict-sanitize default snippet for the published package", () => {
     const snippet = buildMcpConfigSnippet({
       npx: true,
-      serverName: "agw",
+      serverName: "agw-cli",
       chainId: "2741",
     });
 
     expect(snippet).toEqual({
       mcpServers: {
-        agw: {
+        "agw-cli": {
           command: "npx",
-          args: ["-y", "@abstract-foundation/agw", "mcp", "serve", "--sanitize", "strict", "--chain-id", "2741"],
+          args: ["-y", "@abstract-foundation/agw-cli", "mcp", "serve", "--sanitize", "strict", "--chain-id", "2741"],
           env: {
             AGW_SANITIZE_PROFILE: "strict",
           },

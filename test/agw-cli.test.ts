@@ -5,7 +5,7 @@ describe("agw cli", () => {
   it("emits only a JSON error envelope on stderr for failures", () => {
     const result = spawnSync(
       process.execPath,
-      ["--import", "tsx", path.join(process.cwd(), "packages/agw/src/index.ts"), "schema", "missing.command"],
+      ["--import", "tsx", path.join(process.cwd(), "packages/agw-cli/src/index.ts"), "schema", "missing.command"],
       {
         cwd: process.cwd(),
         encoding: "utf8",

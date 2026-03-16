@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { executeCommand } from "../packages/agw/src/runtime.js";
+import { executeCommand } from "../packages/agw-cli/src/runtime.js";
 
 describe("agw app catalog and shipped skills", () => {
   const originalFetch = global.fetch;
@@ -262,11 +262,11 @@ describe("agw app catalog and shipped skills", () => {
 
   it("ships the first-party skill files with the agw package", () => {
     const skillFiles = [
-      "packages/agw/skills/agw-auth-session/SKILL.md",
-      "packages/agw/skills/agw-wallet-reads/SKILL.md",
-      "packages/agw/skills/agw-tx-discipline/SKILL.md",
-      "packages/agw/skills/agw-portal-discovery/SKILL.md",
-      "packages/agw/skills/protocol-aborean/SKILL.md",
+      "packages/agw-cli/skills/agw-auth-session/SKILL.md",
+      "packages/agw-cli/skills/agw-wallet-reads/SKILL.md",
+      "packages/agw-cli/skills/agw-tx-discipline/SKILL.md",
+      "packages/agw-cli/skills/agw-portal-discovery/SKILL.md",
+      "packages/agw-cli/skills/protocol-aborean/SKILL.md",
     ];
 
     for (const skillFile of skillFiles) {

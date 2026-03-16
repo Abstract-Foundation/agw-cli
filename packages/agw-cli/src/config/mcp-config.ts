@@ -7,10 +7,10 @@ export interface BuildMcpConfigSnippetInput {
 }
 
 export function buildMcpConfigSnippet(input: BuildMcpConfigSnippetInput = {}): Record<string, unknown> {
-  const serverName = input.serverName ?? "agw";
+  const serverName = input.serverName ?? "agw-cli";
 
   if (input.npx) {
-    const args = ["-y", "@abstract-foundation/agw", "mcp", "serve", "--sanitize", "strict"];
+    const args = ["-y", "@abstract-foundation/agw-cli", "mcp", "serve", "--sanitize", "strict"];
     if (input.chainId) {
       args.push("--chain-id", input.chainId);
     }
@@ -27,7 +27,7 @@ export function buildMcpConfigSnippet(input: BuildMcpConfigSnippetInput = {}): R
     };
   }
 
-  const command = input.command ?? "agw";
+  const command = input.command ?? "agw-cli";
   const args = input.args ?? ["mcp", "serve", "--sanitize", "strict"];
 
   return {

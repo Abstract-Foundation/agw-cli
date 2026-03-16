@@ -1,5 +1,5 @@
 {
-  "name": "agw",
+  "name": "agw-cli",
   "description": "Agent-first AGW plugin with bundled skills and MCP access.",
   "version": "0.1.0",
   "author": {

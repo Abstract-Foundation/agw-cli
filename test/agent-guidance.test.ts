@@ -9,7 +9,7 @@ describe("shipped agent guidance", () => {
   it("ships a top-level CONTEXT.md with runtime-first rules", () => {
     const context = read("CONTEXT.md");
 
-    expect(context).toContain("agw schema <commandId>");
+    expect(context).toContain("agw-cli schema <commandId>");
     expect(context).toContain("--dry-run");
     expect(context).toContain("AGW_HOME");
     expect(context).toContain("AGW_OUTPUT");
@@ -17,8 +17,8 @@ describe("shipped agent guidance", () => {
   });
 
   it("keeps first-party skills aligned with dry-run/execute guidance", () => {
-    const authSkill = read("packages/agw/skills/agw-auth-session/SKILL.md");
-    const txSkill = read("packages/agw/skills/agw-tx-discipline/SKILL.md");
+    const authSkill = read("packages/agw-cli/skills/agw-auth-session/SKILL.md");
+    const txSkill = read("packages/agw-cli/skills/agw-tx-discipline/SKILL.md");
 
     expect(authSkill).toContain("--dry-run");
     expect(authSkill).toContain("--execute");

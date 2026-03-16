@@ -7,11 +7,11 @@ This directory contains packaging assets for agent hosts that can load AGW as a 
 - `claude-code/`: Claude Code MCP config scaffold
 - `gemini/`: Gemini extension guidance
 
-Both surfaces assume the `agw` binary is installed and available on `PATH`.
+Both surfaces assume the `agw-cli` binary is installed and available on `PATH`.
 
 ## Contract
 
-- AGW remains JSON-first. Use `agw schema <commandId>` when the request shape is unclear.
+- AGW remains JSON-first. Use `agw-cli schema <commandId>` when the request shape is unclear.
 - Runtime config comes from `AGW_*` env vars or CLI flags, not from JSON payload fields.
 - Output precedence is `--output`, then payload `output`, then `AGW_OUTPUT`, then command defaults.
 - Mutating commands support `--dry-run` and `--execute`.
@@ -23,14 +23,14 @@ Both surfaces assume the `agw` binary is installed and available on `PATH`.
 Generate a config snippet from the CLI when possible:
 
 ```bash
-agw mcp-config
-agw mcp-config --npx
+agw-cli mcp-config
+agw-cli mcp-config --npx
 ```
 
 Keep the extension host focused on the MCP surface:
 
 ```bash
-agw mcp serve --sanitize strict
+agw-cli mcp serve --sanitize strict
 ```
 
 ## Agent-Friendly Onboarding

@@ -7,14 +7,14 @@ import styles from './home.module.scss';
 type Client = 'claude-code' | 'claude-desktop' | 'cursor';
 
 const COMMANDS = {
-  init: `npx -y @abstract-foundation/agw auth init --json '{"chainId":2741,"execute":true}'`,
+  init: `npx -y @abstract-foundation/agw-cli auth init --json '{"chainId":2741,"execute":true}'`,
   'claude-code':
-    `claude mcp add agw -- npx -y @abstract-foundation/agw mcp serve --json '{"chainId":2741}'`,
+    `claude mcp add agw-cli -- npx -y @abstract-foundation/agw-cli mcp serve --json '{"chainId":2741}'`,
   json: `{
   "mcpServers": {
-    "agw": {
+    "agw-cli": {
       "command": "npx",
-      "args": ["-y", "@abstract-foundation/agw", "mcp", "serve", "--json", "{\\"chainId\\":2741}"]
+      "args": ["-y", "@abstract-foundation/agw-cli", "mcp", "serve", "--json", "{\\"chainId\\":2741}"]
     }
   }
 }`,
@@ -113,7 +113,7 @@ export default function HomePage() {
               <code className={styles.code}>
                 <span className={styles.codeCmd}>npx</span>{' '}
                 <span className={styles.codeFlag}>-y</span>{' '}
-                <span className={styles.codeString}>@abstract-foundation/agw</span>{' '}
+                <span className={styles.codeString}>@abstract-foundation/agw-cli</span>{' '}
                 <span className={styles.codeFlag}>auth init</span>{' '}
                 <span className={styles.codePunct}>--json</span>{' '}
                 <span className={styles.codeString}>{`"{\\"chainId\\":2741,\\"execute\\":true}"`}</span>
@@ -165,11 +165,11 @@ export default function HomePage() {
                   <code className={styles.code}>
                     <span className={styles.codeCmd}>claude</span>{' '}
                     <span className={styles.codeFlag}>mcp add</span>{' '}
-                    <span className={styles.codeString}>agw</span>{' '}
+                    <span className={styles.codeString}>agw-cli</span>{' '}
                     <span className={styles.codePunct}>--</span>{' '}
                     <span className={styles.codeCmd}>npx</span>{' '}
                     <span className={styles.codeFlag}>-y</span>{' '}
-                    <span className={styles.codeString}>@abstract-foundation/agw</span>{' '}
+                    <span className={styles.codeString}>@abstract-foundation/agw-cli</span>{' '}
                     <span className={styles.codeFlag}>mcp serve</span>{' '}
                     <span className={styles.codePunct}>--json</span>{' '}
                     <span className={styles.codeString}>{`"{\\"chainId\\":2741}"`}</span>
@@ -200,7 +200,7 @@ export default function HomePage() {
                     <span className={styles.codePunct}>{'{'}</span>{'\n'}
                     {'  '}<span className={styles.codeKey}>&quot;mcpServers&quot;</span>
                     <span className={styles.codePunct}>: {'{'}</span>{'\n'}
-                    {'    '}<span className={styles.codeKey}>&quot;agw&quot;</span>
+                    {'    '}<span className={styles.codeKey}>&quot;agw-cli&quot;</span>
                     <span className={styles.codePunct}>: {'{'}</span>{'\n'}
                     {'      '}<span className={styles.codeKey}>&quot;command&quot;</span>
                     <span className={styles.codePunct}>: </span>
@@ -210,7 +210,7 @@ export default function HomePage() {
                     <span className={styles.codePunct}>: [</span>{'\n'}
                     {'        '}<span className={styles.codeString}>&quot;-y&quot;</span>
                     <span className={styles.codePunct}>,</span>{'\n'}
-                    {'        '}<span className={styles.codeString}>&quot;@abstract-foundation/agw&quot;</span>
+                    {'        '}<span className={styles.codeString}>&quot;@abstract-foundation/agw-cli&quot;</span>
                     <span className={styles.codePunct}>,</span>{'\n'}
                     {'        '}<span className={styles.codeString}>&quot;mcp&quot;</span>
                     <span className={styles.codePunct}>,</span>{'\n'}
@@ -242,7 +242,7 @@ export default function HomePage() {
                     <span className={styles.codePunct}>{'{'}</span>{'\n'}
                     {'  '}<span className={styles.codeKey}>&quot;mcpServers&quot;</span>
                     <span className={styles.codePunct}>: {'{'}</span>{'\n'}
-                    {'    '}<span className={styles.codeKey}>&quot;agw&quot;</span>
+                    {'    '}<span className={styles.codeKey}>&quot;agw-cli&quot;</span>
                     <span className={styles.codePunct}>: {'{'}</span>{'\n'}
                     {'      '}<span className={styles.codeKey}>&quot;command&quot;</span>
                     <span className={styles.codePunct}>: </span>
@@ -252,7 +252,7 @@ export default function HomePage() {
                     <span className={styles.codePunct}>: [</span>{'\n'}
                     {'        '}<span className={styles.codeString}>&quot;-y&quot;</span>
                     <span className={styles.codePunct}>,</span>{'\n'}
-                    {'        '}<span className={styles.codeString}>&quot;@abstract-foundation/agw&quot;</span>
+                    {'        '}<span className={styles.codeString}>&quot;@abstract-foundation/agw-cli&quot;</span>
                     <span className={styles.codePunct}>,</span>{'\n'}
                     {'        '}<span className={styles.codeString}>&quot;mcp&quot;</span>
                     <span className={styles.codePunct}>,</span>{'\n'}
