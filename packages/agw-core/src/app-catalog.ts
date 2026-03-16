@@ -77,6 +77,12 @@ export const skillCatalog: readonly AgwSkillRef[] = [
     description: "Build, deploy, and integrate applications on Abstract with Foundry, Hardhat, AGW SDK, and paymasters.",
     installPath: "skills/building-on-abstract",
   },
+  {
+    id: "upvoting-on-abstract",
+    title: "Upvoting on Abstract",
+    description: "Vote for apps on the Abstract Portal using the on-chain AbstractVoting contract.",
+    installPath: "skills/upvoting-on-abstract",
+  },
 ];
 
 export const appCatalog: readonly AgwAppCatalogEntry[] = [
