@@ -84,7 +84,6 @@ export function useSessionWizardState() {
         });
       } catch (err) {
         if (cancelled) return;
-        console.error('Failed to resolve AGW account from signer', err);
         markCreationError(
           `Failed to verify AGW on-chain: ${err instanceof Error ? err.message : String(err)}`,
         );

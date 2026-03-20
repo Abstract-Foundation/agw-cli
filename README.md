@@ -215,6 +215,12 @@ Available skills:
 | `executing-agw-transactions` | Preview-first execution rules for signing and sends |
 | `discovering-abstract-portal` | App and Portal stream discovery |
 | `trading-on-aborean` | Aborean Finance protocol workflows |
+| `trading-on-uniswap` | Uniswap V2+V3 swaps and liquidity on Abstract |
+| `bridging-to-abstract` | Native bridge and third-party bridge options |
+| `building-on-abstract` | Developer onboarding, deployment, paymasters, session keys |
+| `managing-agent-identity` | ERC-8004 agent registration and reputation |
+| `upvoting-on-abstract` | Abstract Portal on-chain voting |
+| `mining-with-bigcoin` | Bigcoin virtual mining simulator |
 
 ## Agent Host Extensions
 
