@@ -8,4 +8,5 @@ export default defineConfig({
   platform: "node",
   target: "node18",
   noExternal: ["@abstract-foundation/agw-client"],
+  inlineOnly: false,
 });
