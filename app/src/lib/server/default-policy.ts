@@ -34,13 +34,13 @@ export function buildDefaultPolicyMeta(nowUnixSeconds = Math.floor(Date.now() / 
   };
 }
 
-function buildCapabilitySummary(params: {
-  chainId: number;
-  expiresAt: number;
-}): DelegatedCapabilitySummary {
+export function buildDefaultCapabilitySummary(
+  chainId: number,
+  nowUnixSeconds = Math.floor(Date.now() / 1000),
+): DelegatedCapabilitySummary {
   return {
-    chainId: params.chainId,
-    expiresAt: params.expiresAt,
+    chainId,
+    expiresAt: nowUnixSeconds + DEFAULT_POLICY_EXPIRY_SECONDS,
     feeLimit: DEFAULT_POLICY_FEE_LIMIT,
     maxValuePerUse: DEFAULT_POLICY_MAX_VALUE_PER_USE,
     enabledTools: [...DEFAULT_ENABLED_TOOLS],
@@ -52,100 +52,3 @@ function buildCapabilitySummary(params: {
   };
 }
 
-export function buildDefaultPolicyRequest(params: {
-  chainId: number;
-  signerLabel: string;
-  signerFingerprint: string;
-  nowUnixSeconds?: number;
-}) {
-  const nowUnixSeconds = params.nowUnixSeconds ?? Math.floor(Date.now() / 1000);
-  const expiresAt = nowUnixSeconds + DEFAULT_POLICY_EXPIRY_SECONDS;
-
-  return {
-    version: '1.0',
-    name: `${params.signerLabel} (${params.chainId})`,
-    chain_type: 'ethereum',
-    rules: [
-      {
-        name: 'deny-export-private-key',
-        action: 'DENY',
-        method: 'exportPrivateKey',
-        conditions: [],
-      },
-      {
-        name: 'allow-send-transaction',
-        action: 'ALLOW',
-        method: 'eth_sendTransaction',
-        conditions: [
-          {
-            field_source: 'ethereum_transaction',
-            field: 'chain_id',
-            operator: 'eq',
-            value: String(params.chainId),
-          },
-          {
-            field_source: 'ethereum_transaction',
-            field: 'value',
-            operator: 'lte',
-            value: DEFAULT_POLICY_MAX_VALUE_PER_USE,
-          },
-          {
-            field_source: 'system',
-            field: 'current_unix_timestamp',
-            operator: 'lt',
-            value: String(expiresAt),
-          },
-        ],
-      },
-      {
-        name: 'allow-sign-transaction',
-        action: 'ALLOW',
-        method: 'eth_signTransaction',
-        conditions: [
-          {
-            field_source: 'ethereum_transaction',
-            field: 'chain_id',
-            operator: 'eq',
-            value: String(params.chainId),
-          },
-          {
-            field_source: 'ethereum_transaction',
-            field: 'value',
-            operator: 'lte',
-            value: DEFAULT_POLICY_MAX_VALUE_PER_USE,
-          },
-          {
-            field_source: 'system',
-            field: 'current_unix_timestamp',
-            operator: 'lt',
-            value: String(expiresAt),
-          },
-        ],
-      },
-      {
-        name: 'allow-sign-typed-data',
-        action: 'ALLOW',
-        method: 'eth_signTypedData_v4',
-        conditions: [
-          {
-            field_source: 'ethereum_typed_data_domain',
-            field: 'chainId',
-            operator: 'eq',
-            value: String(params.chainId),
-          },
-          {
-            field_source: 'system',
-            field: 'current_unix_timestamp',
-            operator: 'lt',
-            value: String(expiresAt),
-          },
-        ],
-      },
-    ],
-    policyMeta: buildDefaultPolicyMeta(nowUnixSeconds),
-    capabilitySummary: buildCapabilitySummary({
-      chainId: params.chainId,
-      expiresAt,
-    }),
-  };
-}

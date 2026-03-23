@@ -1,37 +1,37 @@
 import { describe, expect, it } from 'vitest';
-import { buildDefaultPolicyRequest } from '../server/default-policy';
+import { buildDefaultPolicyMeta, buildDefaultCapabilitySummary, DEFAULT_ENABLED_TOOLS } from '../server/default-policy';
 
 describe('default-policy', () => {
-  it('scopes transaction signing and sending rules to the selected chain', () => {
-    const policy = buildDefaultPolicyRequest({
-      chainId: 11124,
-      signerLabel: 'AGW MCP signer',
-      signerFingerprint: 'abc:def',
-      nowUnixSeconds: 1_800_000_000,
+  describe('buildDefaultPolicyMeta', () => {
+    it('returns guided mode with full_app_control preset', () => {
+      // #given
+      const now = 1_800_000_000;
+
+      // #when
+      const meta = buildDefaultPolicyMeta(now);
+
+      // #then
+      expect(meta.mode).toBe('guided');
+      expect(meta.presetId).toBe('full_app_control');
+      expect(meta.enabledTools).toEqual(DEFAULT_ENABLED_TOOLS);
+      expect(meta.generatedAt).toBe(now);
     });
+  });
 
-    const sendRule = policy.rules.find(rule => rule.method === 'eth_sendTransaction');
-    const signRule = policy.rules.find(rule => rule.method === 'eth_signTransaction');
+  describe('buildDefaultCapabilitySummary', () => {
+    it('sets expiry to 30 days from now with correct chain and limits', () => {
+      // #given
+      const now = 1_800_000_000;
+      const thirtyDays = 30 * 24 * 60 * 60;
 
-    expect(sendRule?.conditions).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          field_source: 'ethereum_transaction',
-          field: 'chain_id',
-          operator: 'eq',
-          value: '11124',
-        }),
-      ]),
-    );
-    expect(signRule?.conditions).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          field_source: 'ethereum_transaction',
-          field: 'chain_id',
-          operator: 'eq',
-          value: '11124',
-        }),
-      ]),
-    );
+      // #when
+      const summary = buildDefaultCapabilitySummary(11124, now);
+
+      // #then
+      expect(summary.chainId).toBe(11124);
+      expect(summary.expiresAt).toBe(now + thirtyDays);
+      expect(summary.feeLimit).toBe('2000000000000000');
+      expect(summary.maxValuePerUse).toBe('10000000000000000');
+    });
   });
 });

@@ -264,18 +264,6 @@ export async function createKeyQuorum(params: {
   return normalizeKeyQuorumRecord(keyQuorum);
 }
 
-export async function createPolicy(body: Record<string, unknown>): Promise<{ id: string }> {
-  const policy = await privyFetch<Record<string, unknown>>('/api/v1/policies', {
-    method: 'POST',
-    body: JSON.stringify(body),
-  });
-
-  if (typeof policy.id !== 'string' || policy.id.trim() === '') {
-    throw new Error('Privy returned an invalid policy id.');
-  }
-
-  return { id: policy.id };
-}
 
 export async function updateWalletWithSignature(params: {
   walletId: string;

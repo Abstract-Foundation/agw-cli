@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
-import { buildDefaultPolicyRequest } from '@/lib/server/default-policy';
+import { getDefaultPolicyId } from '@/lib/config';
+import { buildDefaultPolicyMeta, buildDefaultCapabilitySummary } from '@/lib/server/default-policy';
 import {
   buildSignerLabel,
   computeSignerFingerprint,
   createKeyQuorum,
-  createPolicy,
   findWalletByAddress,
   listExistingAgwMcpSigners,
 } from '@/lib/server/privy-api';
@@ -49,18 +49,9 @@ export async function POST(request: Request) {
       displayName: signerLabel,
     });
 
-    const defaultPolicy = buildDefaultPolicyRequest({
-      chainId,
-      signerLabel,
-      signerFingerprint,
-    });
-    const policy = await createPolicy({
-      version: defaultPolicy.version,
-      name: defaultPolicy.name,
-      owner_id: signer.id,
-      chain_type: defaultPolicy.chain_type,
-      rules: defaultPolicy.rules,
-    });
+    const policyId = getDefaultPolicyId();
+    const policyMeta = buildDefaultPolicyMeta();
+    const capabilitySummary = buildDefaultCapabilitySummary(chainId);
 
     const provisionAttestation = signCallbackPayload(
       buildSignedCallbackPayload({
@@ -72,12 +63,12 @@ export async function POST(request: Request) {
         authPublicKey: body.authPublicKey,
         walletId: wallet.id,
         signerId: signer.id,
-        policyIds: [policy.id],
+        policyIds: [policyId],
         signerFingerprint,
         signerLabel,
         signerCreatedAt: signer.createdAt,
-        policyMeta: defaultPolicy.policyMeta,
-        capabilitySummary: defaultPolicy.capabilitySummary,
+        policyMeta,
+        capabilitySummary,
       }, 30 * 60),
     );
     const result: ProvisionedSignerResult = {
@@ -87,12 +78,12 @@ export async function POST(request: Request) {
       signerType: 'device_authorization_key',
       signerId: signer.id,
       provisionAttestation,
-      policyIds: [policy.id],
+      policyIds: [policyId],
       signerFingerprint,
       signerLabel,
       signerCreatedAt: signer.createdAt,
-      policyMeta: defaultPolicy.policyMeta,
-      capabilitySummary: defaultPolicy.capabilitySummary,
+      policyMeta,
+      capabilitySummary,
       existingSigners,
     };
 
