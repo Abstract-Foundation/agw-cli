@@ -105,7 +105,7 @@ Returns an array of app IDs the user has voted for this epoch.
 
 1. Check vote cost: `voteCost()` → returns cost in wei
 2. Check remaining votes: `userVotesRemaining(address)` → returns count
-3. Find the app ID via `agw portal apps list` or `agw app list`
+3. Find the app ID via `agw-cli app list` (live Portal apps merged with the shipped catalog)
 4. Preview the vote: `voteForApp(appId)` with `--dry-run` and `value` set to vote cost
 5. Execute after confirmation: `--execute`
 6. Verify: `getUserVotes(address, epoch)` to confirm your vote was recorded
