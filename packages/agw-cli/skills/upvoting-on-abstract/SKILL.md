@@ -31,7 +31,7 @@ The AGW CLI requires full JSON ABI objects, not human-readable strings. Every `a
 ### Check vote cost and current epoch
 
 ```bash
-agw contract write --json '{
+agw-cli contract write --json '{
   "address": "0x3b50de27506f0a8c1f4122a1e6f470009a76ce2a",
   "abi": [{"type":"function","name":"voteCost","stateMutability":"view","inputs":[],"outputs":[{"name":"","type":"uint96"}]}],
   "functionName": "voteCost",
@@ -40,7 +40,7 @@ agw contract write --json '{
 ```
 
 ```bash
-agw contract write --json '{
+agw-cli contract write --json '{
   "address": "0x3b50de27506f0a8c1f4122a1e6f470009a76ce2a",
   "abi": [{"type":"function","name":"currentEpoch","stateMutability":"view","inputs":[],"outputs":[{"name":"","type":"uint256"}]}],
   "functionName": "currentEpoch",
@@ -51,7 +51,7 @@ agw contract write --json '{
 ### Check remaining votes
 
 ```bash
-agw contract write --json '{
+agw-cli contract write --json '{
   "address": "0x3b50de27506f0a8c1f4122a1e6f470009a76ce2a",
   "abi": [{"type":"function","name":"userVotesRemaining","stateMutability":"view","inputs":[{"name":"user","type":"address"}],"outputs":[{"name":"","type":"uint256"}]}],
   "functionName": "userVotesRemaining",
@@ -64,7 +64,7 @@ agw contract write --json '{
 Replace `<APP_ID>` with the Portal app ID (e.g., `25` for Onchain Heroes) and `<VOTE_COST>` with the value from `voteCost()`:
 
 ```bash
-agw contract write --json '{
+agw-cli contract write --json '{
   "address": "0x3b50de27506f0a8c1f4122a1e6f470009a76ce2a",
   "abi": [{"type":"function","name":"voteForApp","stateMutability":"payable","inputs":[{"name":"appId","type":"uint256"}],"outputs":[]}],
   "functionName": "voteForApp",
@@ -78,7 +78,7 @@ Execute only after confirming the preview: replace `--dry-run` with `--execute`.
 ### Check votes for a specific app
 
 ```bash
-agw contract write --json '{
+agw-cli contract write --json '{
   "address": "0x3b50de27506f0a8c1f4122a1e6f470009a76ce2a",
   "abi": [{"type":"function","name":"getVotesForApp","stateMutability":"view","inputs":[{"name":"appId","type":"uint256"},{"name":"epoch","type":"uint256"}],"outputs":[{"name":"","type":"uint256"}]}],
   "functionName": "getVotesForApp",
@@ -91,7 +91,7 @@ Use `currentEpoch()` to get the current epoch number first.
 ### Check which apps a user voted for
 
 ```bash
-agw contract write --json '{
+agw-cli contract write --json '{
   "address": "0x3b50de27506f0a8c1f4122a1e6f470009a76ce2a",
   "abi": [{"type":"function","name":"getUserVotes","stateMutability":"view","inputs":[{"name":"user","type":"address"},{"name":"epoch","type":"uint256"}],"outputs":[{"name":"","type":"uint256[]"}]}],
   "functionName": "getUserVotes",
@@ -105,7 +105,7 @@ Returns an array of app IDs the user has voted for this epoch.
 
 1. Check vote cost: `voteCost()` → returns cost in wei
 2. Check remaining votes: `userVotesRemaining(address)` → returns count
-3. Find the app ID via `agw portal apps list` or `agw app list`
+3. Find the app ID via `agw-cli app list`
 4. Preview the vote: `voteForApp(appId)` with `--dry-run` and `value` set to vote cost
 5. Execute after confirmation: `--execute`
 6. Verify: `getUserVotes(address, epoch)` to confirm your vote was recorded
