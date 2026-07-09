@@ -1,4 +1,4 @@
-import { encodeFunctionData } from "viem";
+import { encodeFunctionData, type Abi, type AbiFunction } from "viem";
 import { AgwCliError } from "../../errors.js";
 import { assertToolAllowedByPolicyMeta } from "../../policy/meta.js";
 import { deployContractTool } from "../../tools/deploy-contract.js";
@@ -6,6 +6,14 @@ import { writeContractTool } from "../../tools/write-contract.js";
 import type { CommandHandler } from "../types.js";
 import { requireActiveSession } from "../context.js";
 import { assertAddressString, assertDecimalString, parseOptionalBoolean } from "../validation.js";
+
+function isViewOrPure(abi: Abi, functionName: string): boolean {
+  const fn = abi.find(
+    (item): item is AbiFunction =>
+      item.type === "function" && item.name === functionName,
+  );
+  return fn?.stateMutability === "view" || fn?.stateMutability === "pure";
+}
 
 export const contractHandlers: Record<string, CommandHandler> = {
   "contract.write": async (input, context) => {
@@ -34,6 +42,19 @@ export const contractHandlers: Record<string, CommandHandler> = {
         } as never);
       } catch {
         throw new AgwCliError("INVALID_INPUT", "invalid abi/functionName/args payload", 2);
+      }
+
+      if (isViewOrPure(input.abi as Abi, input.functionName)) {
+        return writeContractTool.handler(
+          {
+            address: input.address,
+            abi: input.abi,
+            functionName: input.functionName,
+            args: input.args,
+            value: input.value,
+          },
+          context,
+        );
       }
 
       return {

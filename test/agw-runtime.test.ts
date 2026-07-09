@@ -406,6 +406,53 @@ describe("agw runtime", () => {
     });
   });
 
+  it("executes view contract calls without requiring execute", async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agw-runtime-"));
+    createActiveSession(tmpDir);
+
+    global.fetch = jest.fn(async () =>
+      new Response(
+        JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          result: "0x000000000000000000000000000000000000000000000000000000000000007b",
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    ) as unknown as typeof fetch;
+
+    await expect(
+      executeCommand("contract.write", {
+        address: "0x4444444444444444444444444444444444444444",
+        abi: [
+          {
+            type: "function",
+            name: "currentEpoch",
+            stateMutability: "view",
+            inputs: [],
+            outputs: [{ name: "", type: "uint256" }],
+          },
+        ],
+        functionName: "currentEpoch",
+        args: [],
+      }, {
+        homeDir: tmpDir,
+      }),
+    ).resolves.toEqual({
+      outputMode: "json",
+      result: {
+        result: "123",
+        accountAddress: "0x1111111111111111111111111111111111111111",
+        chainId: 2741,
+        contract: {
+          address: "0x4444444444444444444444444444444444444444",
+          functionName: "currentEpoch",
+          args: [],
+        },
+      },
+    });
+  });
+
   it("defaults pagination-aware pageAll reads to ndjson when stdout is not a tty", async () => {
     global.fetch = jest.fn(async () =>
       new Response(
